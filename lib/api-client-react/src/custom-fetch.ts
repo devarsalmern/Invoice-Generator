@@ -358,6 +358,13 @@ export async function customFetch<T = unknown>(
     }
   }
 
+  if (!headers.has("authorization")) {
+    const token = localStorage?.getItem("payrollpro_token");
+    if (token) {
+      headers.set("authorization", `Bearer ${token}`);
+    }
+  }
+
   const requestInfo = { method, url: resolveUrl(input) };
 
   const response = await fetch(input, { ...init, method, headers });

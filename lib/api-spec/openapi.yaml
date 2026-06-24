@@ -3,20 +3,35 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: PayrollPro API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: companies
+    description: Company management
+  - name: employees
+    description: Employee management
+  - name: payslips
+    description: Payslip management
+  - name: invoices
+    description: Invoice management
+  - name: verify
+    description: Document verification
+  - name: dashboard
+    description: Dashboard aggregates
+  - name: audit
+    description: Audit log operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +39,698 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # AUTH
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # COMPANIES
+  /companies:
+    get:
+      operationId: listCompanies
+      tags: [companies]
+      summary: List companies
+      responses:
+        "200":
+          description: List of companies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Company"
+    post:
+      operationId: createCompany
+      tags: [companies]
+      summary: Create a company
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyInput"
+      responses:
+        "201":
+          description: Company created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+
+  /companies/{id}:
+    get:
+      operationId: getCompany
+      tags: [companies]
+      summary: Get company by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Company
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+    patch:
+      operationId: updateCompany
+      tags: [companies]
+      summary: Update company
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyUpdate"
+      responses:
+        "200":
+          description: Updated company
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+    delete:
+      operationId: deleteCompany
+      tags: [companies]
+      summary: Delete company
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # EMPLOYEES
+  /employees:
+    get:
+      operationId: listEmployees
+      tags: [employees]
+      summary: List employees
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: department
+          in: query
+          schema:
+            type: string
+        - name: designation
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of employees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employee"
+    post:
+      operationId: createEmployee
+      tags: [employees]
+      summary: Create an employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeInput"
+      responses:
+        "201":
+          description: Employee created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+
+  /employees/{id}:
+    get:
+      operationId: getEmployee
+      tags: [employees]
+      summary: Get employee by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+    patch:
+      operationId: updateEmployee
+      tags: [employees]
+      summary: Update employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeUpdate"
+      responses:
+        "200":
+          description: Updated employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+    delete:
+      operationId: deleteEmployee
+      tags: [employees]
+      summary: Delete employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # PAYSLIPS
+  /payslips:
+    get:
+      operationId: listPayslips
+      tags: [payslips]
+      summary: List payslips
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+        - name: employeeId
+          in: query
+          schema:
+            type: integer
+        - name: month
+          in: query
+          schema:
+            type: integer
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of payslips
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payslip"
+    post:
+      operationId: createPayslip
+      tags: [payslips]
+      summary: Create a payslip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayslipInput"
+      responses:
+        "201":
+          description: Payslip created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payslip"
+
+  /payslips/{id}:
+    get:
+      operationId: getPayslip
+      tags: [payslips]
+      summary: Get payslip by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payslip
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payslip"
+    patch:
+      operationId: updatePayslip
+      tags: [payslips]
+      summary: Update payslip
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayslipUpdate"
+      responses:
+        "200":
+          description: Updated payslip
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payslip"
+    delete:
+      operationId: deletePayslip
+      tags: [payslips]
+      summary: Delete payslip
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /payslips/{id}/generate-pdf:
+    post:
+      operationId: generatePayslipPdf
+      tags: [payslips]
+      summary: Generate PDF for payslip
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: PDF generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PdfResult"
+
+  /payslips/{id}/send-email:
+    post:
+      operationId: sendPayslipEmail
+      tags: [payslips]
+      summary: Send payslip by email
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Email sent
+
+  # INVOICES
+  /invoices:
+    get:
+      operationId: listInvoices
+      tags: [invoices]
+      summary: List invoices
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+        - name: to
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invoice"
+    post:
+      operationId: createInvoice
+      tags: [invoices]
+      summary: Create an invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvoiceInput"
+      responses:
+        "201":
+          description: Invoice created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+
+  /invoices/{id}:
+    get:
+      operationId: getInvoice
+      tags: [invoices]
+      summary: Get invoice by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+    patch:
+      operationId: updateInvoice
+      tags: [invoices]
+      summary: Update invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvoiceUpdate"
+      responses:
+        "200":
+          description: Updated invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+    delete:
+      operationId: deleteInvoice
+      tags: [invoices]
+      summary: Delete invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /invoices/{id}/generate-pdf:
+    post:
+      operationId: generateInvoicePdf
+      tags: [invoices]
+      summary: Generate PDF for invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: PDF generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PdfResult"
+
+  /invoices/{id}/send-email:
+    post:
+      operationId: sendInvoiceEmail
+      tags: [invoices]
+      summary: Send invoice by email
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Email sent
+
+  /invoices/{id}/mark-paid:
+    post:
+      operationId: markInvoicePaid
+      tags: [invoices]
+      summary: Mark invoice as paid
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invoice marked paid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+
+  # VERIFY
+  /verify/{token}:
+    get:
+      operationId: verifyDocument
+      tags: [verify]
+      summary: Verify a document by token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationResult"
+
+  # DASHBOARD
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/payroll-trend:
+    get:
+      operationId: getPayrollTrend
+      tags: [dashboard]
+      summary: Get monthly payroll trend (last 12 months)
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payroll trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyTrend"
+
+  /dashboard/invoice-trend:
+    get:
+      operationId: getInvoiceTrend
+      tags: [dashboard]
+      summary: Get monthly invoice trend (last 12 months)
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invoice trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyInvoiceTrend"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent activity feed
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  # AUDIT
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [audit]
+      summary: List audit logs
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLog"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +741,573 @@ components:
       required:
         - status
 
+    # AUTH
+    RegisterInput:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [super_admin, employer, employee]
+        companyId:
+          type: ["integer", "null"]
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user, token]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+
+    User:
+      type: object
+      required: [id, name, email, role, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [super_admin, employer, employee]
+        companyId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+
+    # COMPANY
+    Company:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        registrationNumber:
+          type: ["string", "null"]
+        taxNumber:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        logoUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    CompanyInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        registrationNumber:
+          type: string
+        taxNumber:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+        logoUrl:
+          type: string
+
+    CompanyUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        registrationNumber:
+          type: string
+        taxNumber:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+        logoUrl:
+          type: string
+
+    # EMPLOYEE
+    Employee:
+      type: object
+      required: [id, companyId, firstName, lastName, email, createdAt]
+      properties:
+        id:
+          type: integer
+        companyId:
+          type: integer
+        employeeNumber:
+          type: ["string", "null"]
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: ["string", "null"]
+        designation:
+          type: ["string", "null"]
+        department:
+          type: ["string", "null"]
+        joiningDate:
+          type: ["string", "null"]
+        bankAccount:
+          type: ["string", "null"]
+        salary:
+          type: ["number", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    EmployeeInput:
+      type: object
+      required: [companyId, firstName, lastName, email]
+      properties:
+        companyId:
+          type: integer
+        employeeNumber:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        designation:
+          type: string
+        department:
+          type: string
+        joiningDate:
+          type: string
+        bankAccount:
+          type: string
+        salary:
+          type: number
+
+    EmployeeUpdate:
+      type: object
+      properties:
+        employeeNumber:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        designation:
+          type: string
+        department:
+          type: string
+        joiningDate:
+          type: string
+        bankAccount:
+          type: string
+        salary:
+          type: number
+
+    # PAYSLIP
+    Payslip:
+      type: object
+      required: [id, companyId, employeeId, month, year, grossSalary, netSalary, status, createdAt]
+      properties:
+        id:
+          type: integer
+        companyId:
+          type: integer
+        employeeId:
+          type: integer
+        employee:
+          $ref: "#/components/schemas/Employee"
+        month:
+          type: integer
+        year:
+          type: integer
+        basicSalary:
+          type: number
+        housingAllowance:
+          type: number
+        transportAllowance:
+          type: number
+        bonus:
+          type: number
+        overtime:
+          type: number
+        tax:
+          type: number
+        insurance:
+          type: number
+        otherDeductions:
+          type: number
+        grossSalary:
+          type: number
+        netSalary:
+          type: number
+        status:
+          type: string
+          enum: [draft, generated, sent]
+        pdfUrl:
+          type: ["string", "null"]
+        verificationToken:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    PayslipInput:
+      type: object
+      required: [companyId, employeeId, month, year, basicSalary, grossSalary, netSalary]
+      properties:
+        companyId:
+          type: integer
+        employeeId:
+          type: integer
+        month:
+          type: integer
+        year:
+          type: integer
+        basicSalary:
+          type: number
+        housingAllowance:
+          type: number
+        transportAllowance:
+          type: number
+        bonus:
+          type: number
+        overtime:
+          type: number
+        tax:
+          type: number
+        insurance:
+          type: number
+        otherDeductions:
+          type: number
+        grossSalary:
+          type: number
+        netSalary:
+          type: number
+
+    PayslipUpdate:
+      type: object
+      properties:
+        basicSalary:
+          type: number
+        housingAllowance:
+          type: number
+        transportAllowance:
+          type: number
+        bonus:
+          type: number
+        overtime:
+          type: number
+        tax:
+          type: number
+        insurance:
+          type: number
+        otherDeductions:
+          type: number
+        grossSalary:
+          type: number
+        netSalary:
+          type: number
+        status:
+          type: string
+
+    # INVOICE
+    InvoiceItem:
+      type: object
+      required: [id, invoiceId, description, quantity, unitPrice, amount]
+      properties:
+        id:
+          type: integer
+        invoiceId:
+          type: integer
+        description:
+          type: string
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+        taxRate:
+          type: number
+        amount:
+          type: number
+
+    InvoiceItemInput:
+      type: object
+      required: [description, quantity, unitPrice, amount]
+      properties:
+        description:
+          type: string
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+        taxRate:
+          type: number
+        amount:
+          type: number
+
+    Invoice:
+      type: object
+      required: [id, companyId, invoiceNumber, customerName, issueDate, dueDate, subtotal, taxAmount, totalAmount, status, createdAt]
+      properties:
+        id:
+          type: integer
+        companyId:
+          type: integer
+        invoiceNumber:
+          type: string
+        customerName:
+          type: string
+        customerEmail:
+          type: ["string", "null"]
+        customerAddress:
+          type: ["string", "null"]
+        issueDate:
+          type: string
+        dueDate:
+          type: string
+        subtotal:
+          type: number
+        taxAmount:
+          type: number
+        totalAmount:
+          type: number
+        status:
+          type: string
+          enum: [draft, sent, paid, overdue]
+        pdfUrl:
+          type: ["string", "null"]
+        verificationToken:
+          type: ["string", "null"]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceItem"
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    InvoiceInput:
+      type: object
+      required: [companyId, customerName, issueDate, dueDate, subtotal, taxAmount, totalAmount, items]
+      properties:
+        companyId:
+          type: integer
+        invoiceNumber:
+          type: string
+        customerName:
+          type: string
+        customerEmail:
+          type: string
+        customerAddress:
+          type: string
+        issueDate:
+          type: string
+        dueDate:
+          type: string
+        subtotal:
+          type: number
+        taxAmount:
+          type: number
+        totalAmount:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceItemInput"
+
+    InvoiceUpdate:
+      type: object
+      properties:
+        customerName:
+          type: string
+        customerEmail:
+          type: string
+        customerAddress:
+          type: string
+        issueDate:
+          type: string
+        dueDate:
+          type: string
+        subtotal:
+          type: number
+        taxAmount:
+          type: number
+        totalAmount:
+          type: number
+        status:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceItemInput"
+
+    # VERIFY
+    VerificationResult:
+      type: object
+      required: [valid, documentType]
+      properties:
+        valid:
+          type: boolean
+        documentType:
+          type: ["string", "null"]
+          enum: [payslip, invoice, null]
+        status:
+          type: ["string", "null"]
+        issuedBy:
+          type: ["string", "null"]
+        documentNumber:
+          type: ["string", "null"]
+        issueDate:
+          type: ["string", "null"]
+        amount:
+          type: ["number", "null"]
+        employeeName:
+          type: ["string", "null"]
+        month:
+          type: ["integer", "null"]
+        year:
+          type: ["integer", "null"]
+
+    # PDF
+    PdfResult:
+      type: object
+      required: [pdfUrl]
+      properties:
+        pdfUrl:
+          type: string
+        verificationToken:
+          type: string
+
+    # DASHBOARD
+    DashboardSummary:
+      type: object
+      required: [totalEmployees, totalPayslips, totalInvoices, monthlyPayroll, pendingInvoices, paidInvoices, overdueInvoices]
+      properties:
+        totalEmployees:
+          type: integer
+        totalPayslips:
+          type: integer
+        totalInvoices:
+          type: integer
+        monthlyPayroll:
+          type: number
+        pendingInvoices:
+          type: integer
+        paidInvoices:
+          type: integer
+        overdueInvoices:
+          type: integer
+        revenueTotal:
+          type: number
+
+    MonthlyTrend:
+      type: object
+      required: [month, year, label, totalPayroll, payslipCount]
+      properties:
+        month:
+          type: integer
+        year:
+          type: integer
+        label:
+          type: string
+        totalPayroll:
+          type: number
+        payslipCount:
+          type: integer
+
+    MonthlyInvoiceTrend:
+      type: object
+      required: [month, year, label, totalAmount, invoiceCount, paidAmount]
+      properties:
+        month:
+          type: integer
+        year:
+          type: integer
+        label:
+          type: string
+        totalAmount:
+          type: number
+        invoiceCount:
+          type: integer
+        paidAmount:
+          type: number
+
+    ActivityItem:
+      type: object
+      required: [id, action, entity, entityId, timestamp]
+      properties:
+        id:
+          type: integer
+        action:
+          type: string
+        entity:
+          type: string
+        entityId:
+          type: ["integer", "null"]
+        description:
+          type: ["string", "null"]
+        userName:
+          type: ["string", "null"]
+        timestamp:
+          type: string
+
+    # AUDIT
+    AuditLog:
+      type: object
+      required: [id, action, entity, timestamp]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: ["integer", "null"]
+        userName:
+          type: ["string", "null"]
+        action:
+          type: string
+        entity:
+          type: string
+        entityId:
+          type: ["integer", "null"]
+        timestamp:
+          type: string
