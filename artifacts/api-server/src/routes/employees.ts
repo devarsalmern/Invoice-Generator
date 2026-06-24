@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
 import { employeesTable } from "@workspace/db";
-import { eq, and, ilike, SQL } from "drizzle-orm";
+import { eq, and, SQL } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { requireAuth } from "./auth";
 
@@ -18,8 +18,12 @@ const fmt = (e: any) => ({
   designation: e.designation,
   department: e.department,
   joiningDate: e.joiningDate,
+  address: e.address,
+  abn: e.abn,
   bankAccount: e.bankAccount,
+  bsb: e.bsb,
   salary: e.salary ? parseFloat(e.salary) : null,
+  hourlyRate: e.hourlyRate ? parseFloat(e.hourlyRate) : null,
   createdAt: e.createdAt?.toISOString?.() ?? e.createdAt,
   updatedAt: e.updatedAt?.toISOString?.() ?? e.updatedAt,
 });
@@ -60,14 +64,19 @@ router.get("/", requireAuth, async (req: Request, res: Response) => {
 // POST /employees
 router.post("/", requireAuth, async (req: Request, res: Response) => {
   try {
-    const { companyId, employeeNumber, firstName, lastName, email, phone, designation, department, joiningDate, bankAccount, salary } = req.body;
+    const { companyId, employeeNumber, firstName, lastName, email, phone, designation, department, joiningDate, address, abn, bankAccount, bsb, salary, hourlyRate } = req.body;
     if (!companyId || !firstName || !lastName || !email) {
       res.status(400).json({ error: "companyId, firstName, lastName, email are required" });
       return;
     }
     const [employee] = await db.insert(employeesTable).values({
-      companyId, employeeNumber, firstName, lastName, email, phone, designation, department, joiningDate, bankAccount,
+      companyId, employeeNumber, firstName, lastName, email, phone, designation, department, joiningDate,
+      address: address || null,
+      abn: abn || null,
+      bankAccount: bankAccount || null,
+      bsb: bsb || null,
       salary: salary ? String(salary) : null,
+      hourlyRate: hourlyRate ? String(hourlyRate) : null,
     }).returning();
     res.status(201).json(fmt(employee));
   } catch (err) {
@@ -93,11 +102,16 @@ router.get("/:id", requireAuth, async (req: Request, res: Response) => {
 router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
-    const { employeeNumber, firstName, lastName, email, phone, designation, department, joiningDate, bankAccount, salary } = req.body;
+    const { employeeNumber, firstName, lastName, email, phone, designation, department, joiningDate, address, abn, bankAccount, bsb, salary, hourlyRate } = req.body;
     const [employee] = await db.update(employeesTable)
       .set({
-        employeeNumber, firstName, lastName, email, phone, designation, department, joiningDate, bankAccount,
+        employeeNumber, firstName, lastName, email, phone, designation, department, joiningDate,
+        address: address !== undefined ? address : undefined,
+        abn: abn !== undefined ? abn : undefined,
+        bankAccount: bankAccount !== undefined ? bankAccount : undefined,
+        bsb: bsb !== undefined ? bsb : undefined,
         salary: salary !== undefined ? String(salary) : undefined,
+        hourlyRate: hourlyRate !== undefined ? String(hourlyRate) : undefined,
         updatedAt: new Date(),
       })
       .where(eq(employeesTable.id, id))

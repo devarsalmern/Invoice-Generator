@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
-import { payslipsTable, employeesTable, auditLogsTable } from "@workspace/db";
+import { payslipsTable, payslipItemsTable, employeesTable, companiesTable, auditLogsTable } from "@workspace/db";
 import { eq, and, SQL } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "../lib/logger";
@@ -8,7 +8,18 @@ import { requireAuth } from "./auth";
 
 const router = Router();
 
-const fmt = (p: any, employee?: any) => ({
+const fmtItem = (item: any) => ({
+  id: item.id,
+  payslipId: item.payslipId,
+  date: item.date,
+  description: item.description,
+  quantity: parseFloat(item.quantity || "0"),
+  unitPrice: parseFloat(item.unitPrice || "0"),
+  taxRate: parseFloat(item.taxRate || "10"),
+  amount: parseFloat(item.amount || "0"),
+});
+
+const fmt = (p: any, employee?: any, items?: any[]) => ({
   id: p.id,
   companyId: p.companyId,
   employeeId: p.employeeId,
@@ -16,13 +27,21 @@ const fmt = (p: any, employee?: any) => ({
     id: employee.id, companyId: employee.companyId, employeeNumber: employee.employeeNumber,
     firstName: employee.firstName, lastName: employee.lastName, email: employee.email,
     phone: employee.phone, designation: employee.designation, department: employee.department,
-    joiningDate: employee.joiningDate, bankAccount: employee.bankAccount,
+    joiningDate: employee.joiningDate,
+    address: employee.address,
+    abn: employee.abn,
+    bankAccount: employee.bankAccount,
+    bsb: employee.bsb,
     salary: employee.salary ? parseFloat(employee.salary) : null,
+    hourlyRate: employee.hourlyRate ? parseFloat(employee.hourlyRate) : null,
     createdAt: employee.createdAt?.toISOString?.() ?? employee.createdAt,
     updatedAt: employee.updatedAt?.toISOString?.() ?? employee.updatedAt,
   } : undefined,
   month: p.month,
   year: p.year,
+  issueDate: p.issueDate,
+  dueDate: p.dueDate,
+  referenceNumber: p.referenceNumber,
   basicSalary: parseFloat(p.basicSalary || "0"),
   housingAllowance: parseFloat(p.housingAllowance || "0"),
   transportAllowance: parseFloat(p.transportAllowance || "0"),
@@ -31,11 +50,15 @@ const fmt = (p: any, employee?: any) => ({
   tax: parseFloat(p.tax || "0"),
   insurance: parseFloat(p.insurance || "0"),
   otherDeductions: parseFloat(p.otherDeductions || "0"),
+  subtotal: p.subtotal ? parseFloat(p.subtotal) : null,
+  gstAmount: p.gstAmount ? parseFloat(p.gstAmount) : null,
+  totalAmount: p.totalAmount ? parseFloat(p.totalAmount) : null,
   grossSalary: parseFloat(p.grossSalary || "0"),
   netSalary: parseFloat(p.netSalary || "0"),
   status: p.status,
   pdfUrl: p.pdfUrl,
   verificationToken: p.verificationToken,
+  items: items ? items.map(fmtItem) : [],
   createdAt: p.createdAt?.toISOString?.() ?? p.createdAt,
   updatedAt: p.updatedAt?.toISOString?.() ?? p.updatedAt,
 });
@@ -72,7 +95,15 @@ router.get("/", requireAuth, async (req: Request, res: Response) => {
 router.post("/", requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    const { companyId, employeeId, month, year, basicSalary, housingAllowance, transportAllowance, bonus, overtime, tax, insurance, otherDeductions, grossSalary, netSalary } = req.body;
+    const {
+      companyId, employeeId, month, year,
+      issueDate, dueDate, referenceNumber,
+      basicSalary, housingAllowance, transportAllowance, bonus, overtime,
+      tax, insurance, otherDeductions, grossSalary, netSalary,
+      subtotal, gstAmount, totalAmount,
+      items,
+    } = req.body;
+
     if (!companyId || !employeeId || !month || !year) {
       res.status(400).json({ error: "companyId, employeeId, month, year are required" });
       return;
@@ -80,6 +111,9 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
     const verificationToken = uuidv4();
     const [payslip] = await db.insert(payslipsTable).values({
       companyId, employeeId, month, year,
+      issueDate: issueDate || null,
+      dueDate: dueDate || null,
+      referenceNumber: referenceNumber || null,
       basicSalary: String(basicSalary || 0),
       housingAllowance: String(housingAllowance || 0),
       transportAllowance: String(transportAllowance || 0),
@@ -88,13 +122,33 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
       tax: String(tax || 0),
       insurance: String(insurance || 0),
       otherDeductions: String(otherDeductions || 0),
-      grossSalary: String(grossSalary || 0),
-      netSalary: String(netSalary || 0),
+      subtotal: subtotal !== undefined ? String(subtotal) : null,
+      gstAmount: gstAmount !== undefined ? String(gstAmount) : null,
+      totalAmount: totalAmount !== undefined ? String(totalAmount) : null,
+      grossSalary: String(grossSalary || subtotal || 0),
+      netSalary: String(netSalary || totalAmount || 0),
       verificationToken,
     }).returning();
+
+    // Insert line items if provided
+    if (Array.isArray(items) && items.length > 0) {
+      await db.insert(payslipItemsTable).values(
+        items.map((item: any) => ({
+          payslipId: payslip.id,
+          date: item.date || null,
+          description: item.description || "Daily subcontract painting services",
+          quantity: String(item.quantity || 0),
+          unitPrice: String(item.unitPrice || 0),
+          taxRate: String(item.taxRate ?? 10),
+          amount: String(item.amount || 0),
+        }))
+      );
+    }
+
     await db.insert(auditLogsTable).values({ userId: user.id, action: "Created Payslip", entity: "payslip", entityId: payslip.id, description: `Payslip for employee ${employeeId} month ${month}/${year}` });
     const [employee] = await db.select().from(employeesTable).where(eq(employeesTable.id, payslip.employeeId));
-    res.status(201).json(fmt(payslip, employee));
+    const savedItems = await db.select().from(payslipItemsTable).where(eq(payslipItemsTable.payslipId, payslip.id));
+    res.status(201).json(fmt(payslip, employee, savedItems));
   } catch (err) {
     logger.error({ err }, "Create payslip error");
     res.status(500).json({ error: "Internal server error" });
@@ -108,7 +162,8 @@ router.get("/:id", requireAuth, async (req: Request, res: Response) => {
     const [payslip] = await db.select().from(payslipsTable).where(eq(payslipsTable.id, id));
     if (!payslip) { res.status(404).json({ error: "Not found" }); return; }
     const [employee] = await db.select().from(employeesTable).where(eq(employeesTable.id, payslip.employeeId));
-    res.json(fmt(payslip, employee));
+    const items = await db.select().from(payslipItemsTable).where(eq(payslipItemsTable.payslipId, id));
+    res.json(fmt(payslip, employee, items));
   } catch (err) {
     logger.error({ err }, "Get payslip error");
     res.status(500).json({ error: "Internal server error" });
@@ -120,7 +175,7 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const id = parseInt(req.params.id);
-    const { basicSalary, housingAllowance, transportAllowance, bonus, overtime, tax, insurance, otherDeductions, grossSalary, netSalary, status } = req.body;
+    const { basicSalary, housingAllowance, transportAllowance, bonus, overtime, tax, insurance, otherDeductions, grossSalary, netSalary, subtotal, gstAmount, totalAmount, issueDate, dueDate, referenceNumber, status } = req.body;
     const updates: any = { updatedAt: new Date() };
     if (basicSalary !== undefined) updates.basicSalary = String(basicSalary);
     if (housingAllowance !== undefined) updates.housingAllowance = String(housingAllowance);
@@ -132,12 +187,19 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
     if (otherDeductions !== undefined) updates.otherDeductions = String(otherDeductions);
     if (grossSalary !== undefined) updates.grossSalary = String(grossSalary);
     if (netSalary !== undefined) updates.netSalary = String(netSalary);
+    if (subtotal !== undefined) updates.subtotal = String(subtotal);
+    if (gstAmount !== undefined) updates.gstAmount = String(gstAmount);
+    if (totalAmount !== undefined) updates.totalAmount = String(totalAmount);
+    if (issueDate !== undefined) updates.issueDate = issueDate;
+    if (dueDate !== undefined) updates.dueDate = dueDate;
+    if (referenceNumber !== undefined) updates.referenceNumber = referenceNumber;
     if (status !== undefined) updates.status = status;
     const [payslip] = await db.update(payslipsTable).set(updates).where(eq(payslipsTable.id, id)).returning();
     if (!payslip) { res.status(404).json({ error: "Not found" }); return; }
     await db.insert(auditLogsTable).values({ userId: user.id, action: "Updated Payslip", entity: "payslip", entityId: payslip.id });
     const [employee] = await db.select().from(employeesTable).where(eq(employeesTable.id, payslip.employeeId));
-    res.json(fmt(payslip, employee));
+    const items = await db.select().from(payslipItemsTable).where(eq(payslipItemsTable.payslipId, id));
+    res.json(fmt(payslip, employee, items));
   } catch (err) {
     logger.error({ err }, "Update payslip error");
     res.status(500).json({ error: "Internal server error" });
@@ -149,6 +211,7 @@ router.delete("/:id", requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const id = parseInt(req.params.id);
+    await db.delete(payslipItemsTable).where(eq(payslipItemsTable.payslipId, id));
     await db.delete(payslipsTable).where(eq(payslipsTable.id, id));
     await db.insert(auditLogsTable).values({ userId: user.id, action: "Deleted Payslip", entity: "payslip", entityId: id });
     res.status(204).send();
@@ -166,7 +229,7 @@ router.post("/:id/generate-pdf", requireAuth, async (req: Request, res: Response
     const [payslip] = await db.select().from(payslipsTable).where(eq(payslipsTable.id, id));
     if (!payslip) { res.status(404).json({ error: "Not found" }); return; }
     const token = payslip.verificationToken || uuidv4();
-    const pdfUrl = `/api/payslips/${id}/pdf`;
+    const pdfUrl = `/payslips/${id}/print`;
     const [updated] = await db.update(payslipsTable)
       .set({ status: "generated", pdfUrl, verificationToken: token, updatedAt: new Date() })
       .where(eq(payslipsTable.id, id))

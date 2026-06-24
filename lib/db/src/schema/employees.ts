@@ -13,8 +13,12 @@ export const employeesTable = pgTable("employees", {
   designation: text("designation"),
   department: text("department"),
   joiningDate: text("joining_date"),
+  address: text("address"),
+  abn: text("abn"),
   bankAccount: text("bank_account"),
+  bsb: text("bsb"),
   salary: numeric("salary", { precision: 12, scale: 2 }),
+  hourlyRate: numeric("hourly_rate", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

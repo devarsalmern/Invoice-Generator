@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 
-// Pages
 import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
 import Dashboard from "@/pages/dashboard/Dashboard";
@@ -23,6 +22,7 @@ import EmployeeDetail from "@/pages/employees/EmployeeDetail";
 import PayslipList from "@/pages/payslips/PayslipList";
 import PayslipForm from "@/pages/payslips/PayslipForm";
 import PayslipDetail from "@/pages/payslips/PayslipDetail";
+import PayslipPrint from "@/pages/payslips/PayslipPrint";
 
 import InvoiceList from "@/pages/invoices/InvoiceList";
 import InvoiceForm from "@/pages/invoices/InvoiceForm";
@@ -35,10 +35,8 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { user, isLoading } = useAuth();
-  
-  if (isLoading) return null; // Let AppLayout handle the loading state
+  if (isLoading) return null;
   if (!user) return <Redirect to="/login" />;
-  
   return <Component {...rest} />;
 }
 
@@ -49,138 +47,70 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/verify/:token" component={VerifyDocument} />
 
+      {/* Print route — no AppLayout, must be before /payslips/:id */}
+      <Route path="/payslips/:id/print">
+        {() => <ProtectedRoute component={PayslipPrint} />}
+      </Route>
+
       <Route path="/">
         <Redirect to="/dashboard" />
       </Route>
 
       <Route path="/dashboard">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={Dashboard} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={Dashboard} /></AppLayout>}
       </Route>
 
-      {/* Companies */}
       <Route path="/companies">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={CompanyList} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={CompanyList} /></AppLayout>}
       </Route>
       <Route path="/companies/new">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={CompanyForm} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={CompanyForm} /></AppLayout>}
       </Route>
       <Route path="/companies/:id/edit">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={CompanyForm} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={CompanyForm} /></AppLayout>}
       </Route>
       <Route path="/companies/:id">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={CompanyDetail} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={CompanyDetail} /></AppLayout>}
       </Route>
 
-      {/* Employees */}
       <Route path="/employees">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={EmployeeList} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={EmployeeList} /></AppLayout>}
       </Route>
       <Route path="/employees/new">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={EmployeeForm} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={EmployeeForm} /></AppLayout>}
       </Route>
       <Route path="/employees/:id/edit">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={EmployeeForm} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={EmployeeForm} /></AppLayout>}
       </Route>
       <Route path="/employees/:id">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={EmployeeDetail} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={EmployeeDetail} /></AppLayout>}
       </Route>
 
-      {/* Payslips */}
       <Route path="/payslips">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={PayslipList} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={PayslipList} /></AppLayout>}
       </Route>
       <Route path="/payslips/new">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={PayslipForm} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={PayslipForm} /></AppLayout>}
       </Route>
       <Route path="/payslips/:id">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={PayslipDetail} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={PayslipDetail} /></AppLayout>}
       </Route>
 
-      {/* Invoices */}
       <Route path="/invoices">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={InvoiceList} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={InvoiceList} /></AppLayout>}
       </Route>
       <Route path="/invoices/new">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={InvoiceForm} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={InvoiceForm} /></AppLayout>}
       </Route>
       <Route path="/invoices/:id">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={InvoiceDetail} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={InvoiceDetail} /></AppLayout>}
       </Route>
 
-      {/* Misc */}
       <Route path="/audit-logs">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={AuditLogsList} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={AuditLogsList} /></AppLayout>}
       </Route>
       <Route path="/settings">
-        {() => (
-          <AppLayout>
-            <ProtectedRoute component={Settings} />
-          </AppLayout>
-        )}
+        {() => <AppLayout><ProtectedRoute component={Settings} /></AppLayout>}
       </Route>
 
       <Route>

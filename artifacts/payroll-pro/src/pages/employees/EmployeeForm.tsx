@@ -2,11 +2,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation, useRoute } from "wouter";
-import { 
-  useCreateEmployee, 
-  useGetEmployee, 
-  useUpdateEmployee, 
-  getGetEmployeeQueryKey, 
+import {
+  useCreateEmployee,
+  useGetEmployee,
+  useUpdateEmployee,
+  getGetEmployeeQueryKey,
   getListEmployeesQueryKey,
   useListCompanies,
   getListCompaniesQueryKey
@@ -15,6 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ArrowLeft, UserCircle } from "lucide-react";
@@ -31,8 +32,11 @@ const employeeSchema = z.object({
   designation: z.string().optional(),
   department: z.string().optional(),
   joiningDate: z.string().optional(),
+  address: z.string().optional(),
+  abn: z.string().optional(),
   bankAccount: z.string().optional(),
-  salary: z.string().optional(),
+  bsb: z.string().optional(),
+  hourlyRate: z.string().optional(),
 });
 
 type EmployeeFormValues = z.infer<typeof employeeSchema>;
@@ -42,13 +46,13 @@ export default function EmployeeForm() {
   const [match, params] = useRoute("/employees/:id/edit");
   const isEditing = !!match;
   const id = isEditing ? parseInt(params.id as string, 10) : undefined;
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
-  
+
   const { data: companies } = useListCompanies({
     query: { queryKey: getListCompaniesQueryKey() }
   });
@@ -63,17 +67,9 @@ export default function EmployeeForm() {
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
-      companyId: "",
-      firstName: "",
-      lastName: "",
-      email: "",
-      employeeNumber: "",
-      phone: "",
-      designation: "",
-      department: "",
-      joiningDate: "",
-      bankAccount: "",
-      salary: "",
+      companyId: "", firstName: "", lastName: "", email: "",
+      employeeNumber: "", phone: "", designation: "", department: "",
+      joiningDate: "", address: "", abn: "", bankAccount: "", bsb: "", hourlyRate: "",
     },
   });
 
@@ -89,8 +85,11 @@ export default function EmployeeForm() {
         designation: employee.designation || "",
         department: employee.department || "",
         joiningDate: employee.joiningDate ? new Date(employee.joiningDate).toISOString().split('T')[0] : "",
+        address: (employee as any).address || "",
+        abn: (employee as any).abn || "",
         bankAccount: employee.bankAccount || "",
-        salary: employee.salary ? employee.salary.toString() : "",
+        bsb: (employee as any).bsb || "",
+        hourlyRate: (employee as any).hourlyRate ? (employee as any).hourlyRate.toString() : "",
       });
     }
   }, [employee, form, isEditing]);
@@ -99,30 +98,27 @@ export default function EmployeeForm() {
     const cleanData = {
       ...data,
       companyId: parseInt(data.companyId, 10),
-      salary: data.salary ? parseFloat(data.salary) : undefined,
+      hourlyRate: data.hourlyRate ? parseFloat(data.hourlyRate) : undefined,
       employeeNumber: data.employeeNumber || undefined,
       phone: data.phone || undefined,
       designation: data.designation || undefined,
       department: data.department || undefined,
       joiningDate: data.joiningDate ? new Date(data.joiningDate).toISOString() : undefined,
+      address: data.address || undefined,
+      abn: data.abn || undefined,
       bankAccount: data.bankAccount || undefined,
+      bsb: data.bsb || undefined,
     };
 
     if (isEditing && id) {
-      updateEmployee.mutate({ id, data: cleanData }, {
+      updateEmployee.mutate({ id, data: cleanData as any }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetEmployeeQueryKey(id) });
           queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey() });
           toast({ title: "Employee updated successfully" });
           setLocation(`/employees/${id}`);
         },
-        onError: (err) => {
-          toast({
-            variant: "destructive",
-            title: "Failed to update employee",
-            description: err.message,
-          });
-        }
+        onError: (err) => toast({ variant: "destructive", title: "Failed to update employee", description: err.message }),
       });
     } else {
       createEmployee.mutate({ data: cleanData as any }, {
@@ -131,13 +127,7 @@ export default function EmployeeForm() {
           toast({ title: "Employee created successfully" });
           setLocation(`/employees/${newEmployee.id}`);
         },
-        onError: (err) => {
-          toast({
-            variant: "destructive",
-            title: "Failed to create employee",
-            description: err.message,
-          });
-        }
+        onError: (err) => toast({ variant: "destructive", title: "Failed to create employee", description: err.message }),
       });
     }
   };
@@ -145,11 +135,7 @@ export default function EmployeeForm() {
   const isPending = createEmployee.isPending || updateEmployee.isPending;
 
   if (isEditing && isLoadingEmployee) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   return (
@@ -160,19 +146,14 @@ export default function EmployeeForm() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{isEditing ? "Edit Employee" : "New Employee"}</h1>
-          <p className="text-muted-foreground mt-1">
-            {isEditing ? "Update employee details." : "Add a new team member."}
-          </p>
+          <p className="text-muted-foreground mt-1">{isEditing ? "Update employee details." : "Add a new team member."}</p>
         </div>
       </div>
 
       <Card>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserCircle className="h-5 w-5" />
-              Employee Profile
-            </CardTitle>
+            <CardTitle className="flex items-center gap-2"><UserCircle className="h-5 w-5" />Employee Profile</CardTitle>
             <CardDescription>Personal and professional information.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
@@ -183,27 +164,29 @@ export default function EmployeeForm() {
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name *</Label>
                   <Input id="firstName" {...form.register("firstName")} />
-                  {form.formState.errors.firstName && (
-                    <p className="text-sm text-destructive">{form.formState.errors.firstName.message}</p>
-                  )}
+                  {form.formState.errors.firstName && <p className="text-sm text-destructive">{form.formState.errors.firstName.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name *</Label>
                   <Input id="lastName" {...form.register("lastName")} />
-                  {form.formState.errors.lastName && (
-                    <p className="text-sm text-destructive">{form.formState.errors.lastName.message}</p>
-                  )}
+                  {form.formState.errors.lastName && <p className="text-sm text-destructive">{form.formState.errors.lastName.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address *</Label>
                   <Input id="email" type="email" {...form.register("email")} />
-                  {form.formState.errors.email && (
-                    <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
-                  )}
+                  {form.formState.errors.email && <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" {...form.register("phone")} />
+                  <Input id="phone" placeholder="+61 4XX XXX XXX" {...form.register("phone")} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea id="address" placeholder="Unit 8 90-92 Pohlman St, SOUTHPORT QLD 4215" rows={2} {...form.register("address")} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="abn">ABN (Australian Business Number)</Label>
+                  <Input id="abn" placeholder="XX XXX XXX XXX" {...form.register("abn")} />
                 </div>
               </div>
             </div>
@@ -214,23 +197,13 @@ export default function EmployeeForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="companyId">Company *</Label>
-                  <Select 
-                    onValueChange={(v) => form.setValue("companyId", v)} 
-                    value={form.watch("companyId")}
-                    disabled={isEditing}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select company" />
-                    </SelectTrigger>
+                  <Select onValueChange={(v) => form.setValue("companyId", v)} value={form.watch("companyId")} disabled={isEditing}>
+                    <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
                     <SelectContent>
-                      {companies?.map(c => (
-                        <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-                      ))}
+                      {companies?.map(c => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  {form.formState.errors.companyId && (
-                    <p className="text-sm text-destructive">{form.formState.errors.companyId.message}</p>
-                  )}
+                  {form.formState.errors.companyId && <p className="text-sm text-destructive">{form.formState.errors.companyId.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="employeeNumber">Employee ID</Label>
@@ -241,11 +214,11 @@ export default function EmployeeForm() {
                   <Input id="department" {...form.register("department")} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="designation">Designation / Title</Label>
-                  <Input id="designation" {...form.register("designation")} />
+                  <Label htmlFor="designation">Designation / Trade</Label>
+                  <Input id="designation" placeholder="e.g. Subcontractor, Painter" {...form.register("designation")} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="joiningDate">Joining Date</Label>
+                  <Label htmlFor="joiningDate">Start Date</Label>
                   <Input id="joiningDate" type="date" {...form.register("joiningDate")} />
                 </div>
               </div>
@@ -256,20 +229,22 @@ export default function EmployeeForm() {
               <h3 className="text-lg font-medium border-b pb-2">Financial Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="salary">Base Salary (Annual/Monthly)</Label>
-                  <Input id="salary" type="number" step="0.01" {...form.register("salary")} />
+                  <Label htmlFor="hourlyRate">Hourly Rate (AUD $)</Label>
+                  <Input id="hourlyRate" type="number" step="0.01" placeholder="27.00" {...form.register("hourlyRate")} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bankAccount">Bank Account Details</Label>
-                  <Input id="bankAccount" {...form.register("bankAccount")} />
+                  <Label htmlFor="bsb">BSB Number</Label>
+                  <Input id="bsb" placeholder="064-170" {...form.register("bsb")} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="bankAccount">Bank Account Number</Label>
+                  <Input id="bankAccount" placeholder="10828825" {...form.register("bankAccount")} />
                 </div>
               </div>
             </div>
           </CardContent>
           <CardFooter className="flex justify-between border-t p-6">
-            <Button type="button" variant="outline" onClick={() => setLocation(isEditing ? `/employees/${id}` : "/employees")}>
-              Cancel
-            </Button>
+            <Button type="button" variant="outline" onClick={() => setLocation(isEditing ? `/employees/${id}` : "/employees")}>Cancel</Button>
             <Button type="submit" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditing ? "Save Changes" : "Add Employee"}
