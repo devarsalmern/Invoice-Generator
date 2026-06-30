@@ -175,8 +175,17 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const id = parseInt(req.params.id);
-    const { basicSalary, housingAllowance, transportAllowance, bonus, overtime, tax, insurance, otherDeductions, grossSalary, netSalary, subtotal, gstAmount, totalAmount, issueDate, dueDate, referenceNumber, status } = req.body;
+    const {
+      basicSalary, housingAllowance, transportAllowance, bonus, overtime,
+      tax, insurance, otherDeductions, grossSalary, netSalary,
+      subtotal, gstAmount, totalAmount,
+      issueDate, dueDate, referenceNumber, status, month, year,
+      items,
+    } = req.body;
+
     const updates: any = { updatedAt: new Date() };
+    if (month !== undefined) updates.month = month;
+    if (year !== undefined) updates.year = year;
     if (basicSalary !== undefined) updates.basicSalary = String(basicSalary);
     if (housingAllowance !== undefined) updates.housingAllowance = String(housingAllowance);
     if (transportAllowance !== undefined) updates.transportAllowance = String(transportAllowance);
@@ -194,12 +203,32 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
     if (dueDate !== undefined) updates.dueDate = dueDate;
     if (referenceNumber !== undefined) updates.referenceNumber = referenceNumber;
     if (status !== undefined) updates.status = status;
+
     const [payslip] = await db.update(payslipsTable).set(updates).where(eq(payslipsTable.id, id)).returning();
     if (!payslip) { res.status(404).json({ error: "Not found" }); return; }
+
+    // Replace items if provided
+    if (Array.isArray(items)) {
+      await db.delete(payslipItemsTable).where(eq(payslipItemsTable.payslipId, id));
+      if (items.length > 0) {
+        await db.insert(payslipItemsTable).values(
+          items.map((item: any) => ({
+            payslipId: id,
+            date: item.date || null,
+            description: item.description || "Daily subcontract painting services",
+            quantity: String(item.quantity || 0),
+            unitPrice: String(item.unitPrice || 0),
+            taxRate: String(item.taxRate ?? 0),
+            amount: String(item.amount || 0),
+          }))
+        );
+      }
+    }
+
     await db.insert(auditLogsTable).values({ userId: user.id, action: "Updated Payslip", entity: "payslip", entityId: payslip.id });
     const [employee] = await db.select().from(employeesTable).where(eq(employeesTable.id, payslip.employeeId));
-    const items = await db.select().from(payslipItemsTable).where(eq(payslipItemsTable.payslipId, id));
-    res.json(fmt(payslip, employee, items));
+    const savedItems = await db.select().from(payslipItemsTable).where(eq(payslipItemsTable.payslipId, id));
+    res.json(fmt(payslip, employee, savedItems));
   } catch (err) {
     logger.error({ err }, "Update payslip error");
     res.status(500).json({ error: "Internal server error" });

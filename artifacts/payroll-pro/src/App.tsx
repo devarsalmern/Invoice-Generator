@@ -23,6 +23,7 @@ import PayslipList from "@/pages/payslips/PayslipList";
 import PayslipForm from "@/pages/payslips/PayslipForm";
 import PayslipDetail from "@/pages/payslips/PayslipDetail";
 import PayslipPrint from "@/pages/payslips/PayslipPrint";
+import PayslipEditForm from "@/pages/payslips/PayslipEditForm";
 
 import InvoiceList from "@/pages/invoices/InvoiceList";
 import InvoiceForm from "@/pages/invoices/InvoiceForm";
@@ -91,6 +92,9 @@ function Router() {
       </Route>
       <Route path="/payslips/new">
         {() => <AppLayout><ProtectedRoute component={PayslipForm} /></AppLayout>}
+      </Route>
+      <Route path="/payslips/:id/edit">
+        {() => <AppLayout><ProtectedRoute component={PayslipEditForm} /></AppLayout>}
       </Route>
       <Route path="/payslips/:id">
         {() => <AppLayout><ProtectedRoute component={PayslipDetail} /></AppLayout>}

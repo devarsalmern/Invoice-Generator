@@ -1,4 +1,4 @@
-import { useRoute, useLocation } from "wouter";
+import { useRoute, useLocation, Link } from "wouter";
 import {
   useGetPayslip, useDeletePayslip, useGeneratePayslipPdf, useSendPayslipEmail,
   getGetPayslipQueryKey, getListPayslipsQueryKey, useGetCompany, getGetCompanyQueryKey
@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { FileText, Mail, Download, Trash2, ArrowLeft, Loader2, CheckCircle2, Printer } from "lucide-react";
+import { FileText, Mail, Download, Trash2, ArrowLeft, Loader2, CheckCircle2, Printer, Pencil } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -112,6 +112,11 @@ export default function PayslipDetail() {
           )}
           <Button variant="outline" onClick={() => window.open(`/payslips/${id}/print`, "_blank")}>
             <Printer className="h-4 w-4 mr-2" />Print
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href={`/payslips/${id}/edit`}>
+              <Pencil className="h-4 w-4 mr-2" />Edit
+            </Link>
           </Button>
           <Button
             onClick={handleSendEmail}

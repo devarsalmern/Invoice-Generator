@@ -129,18 +129,22 @@ export default function PayslipInvoiceView({ payslip, company }: PayslipInvoiceV
       {/* Totals (right-aligned) */}
       <div className="flex justify-end mb-8">
         <div className="w-64">
-          <div className="flex justify-between py-1.5 text-sm">
-            <span className="text-gray-600">Subtotal</span>
-            <span>{fmt(subtotal)}</span>
-          </div>
-          <div className="flex justify-between py-1.5 text-sm">
-            <span className="text-gray-600">Total GST</span>
-            <span>{fmt(gstAmount)}</span>
-          </div>
-          <div className="flex justify-between py-1.5 text-sm border-t border-gray-200 mt-1">
-            <span className="text-gray-600">Total</span>
-            <span>{fmt(totalAmount)}</span>
-          </div>
+          {gstAmount > 0 && (
+            <>
+              <div className="flex justify-between py-1.5 text-sm">
+                <span className="text-gray-600">Subtotal</span>
+                <span>{fmt(subtotal)}</span>
+              </div>
+              <div className="flex justify-between py-1.5 text-sm">
+                <span className="text-gray-600">Total GST 10%</span>
+                <span>{fmt(gstAmount)}</span>
+              </div>
+              <div className="flex justify-between py-1.5 text-sm border-t border-gray-200 mt-1">
+                <span className="text-gray-600">Total</span>
+                <span>{fmt(totalAmount)}</span>
+              </div>
+            </>
+          )}
           <div className="flex justify-between py-2 border-t border-gray-900 mt-1">
             <span className="font-bold">Amount due</span>
             <span className="font-bold text-base">{fmtAud(totalAmount)}</span>

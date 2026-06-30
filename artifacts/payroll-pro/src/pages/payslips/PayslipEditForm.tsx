@@ -1,14 +1,10 @@
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import {
-  useCreatePayslip,
+  useGetPayslip, getGetPayslipQueryKey,
   getListPayslipsQueryKey,
-  useListCompanies,
-  getListCompaniesQueryKey,
-  useListEmployees,
-  getListEmployeesQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -30,8 +26,6 @@ const itemSchema = z.object({
 });
 
 const payslipSchema = z.object({
-  companyId: z.string().min(1, "Company is required"),
-  employeeId: z.string().min(1, "Employee is required"),
   month: z.string().min(1),
   year: z.string().min(1),
   issueDate: z.string().optional(),
@@ -43,7 +37,9 @@ const payslipSchema = z.object({
 
 type PayslipFormValues = z.infer<typeof payslipSchema>;
 
-const parseNum = (v: string | undefined) => { const n = parseFloat(v || "0"); return isNaN(n) ? 0 : n; };
+const parseNum = (v: string | number | undefined | null) => {
+  const n = parseFloat(String(v || "0")); return isNaN(n) ? 0 : n;
+};
 const fmt2 = (n: number) => n.toFixed(2);
 
 const months = [
@@ -55,21 +51,22 @@ const months = [
   { value: "11", label: "November" }, { value: "12", label: "December" },
 ];
 
-export default function PayslipForm() {
+const BASE_URL = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
+
+export default function PayslipEditForm() {
   const [, setLocation] = useLocation();
+  const [, params] = useRoute("/payslips/:id/edit");
+  const id = parseInt(params?.id as string, 10);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
-  const [defaultHourlyRate, setDefaultHourlyRate] = useState<string>("0");
+  const [saving, setSaving] = useState(false);
+  const [ready, setReady] = useState(false);
 
-  const createPayslip = useCreatePayslip();
-  const { data: companies } = useListCompanies({ query: { queryKey: getListCompaniesQueryKey() } });
-  const { data: employees } = useListEmployees(
-    { companyId: selectedCompanyId ? parseInt(selectedCompanyId, 10) : undefined },
-    { query: { enabled: !!selectedCompanyId, queryKey: getListEmployeesQueryKey({ companyId: selectedCompanyId ? parseInt(selectedCompanyId, 10) : undefined }) } }
-  );
+  const { data: payslip, isLoading } = useGetPayslip(id, {
+    query: { enabled: !!id, queryKey: getGetPayslipQueryKey(id) }
+  });
 
-  const today = new Date().toISOString().split("T")[0];
   const currentDate = new Date();
   const years: string[] = [];
   for (let y = currentDate.getFullYear() - 2; y <= currentDate.getFullYear() + 1; y++) years.push(String(y));
@@ -77,34 +74,38 @@ export default function PayslipForm() {
   const form = useForm<PayslipFormValues>({
     resolver: zodResolver(payslipSchema),
     defaultValues: {
-      companyId: "", employeeId: "",
       month: String(currentDate.getMonth() + 1),
       year: String(currentDate.getFullYear()),
-      issueDate: today, dueDate: "", referenceNumber: "",
+      issueDate: "", dueDate: "", referenceNumber: "",
       includeTax: false,
-      items: [{ date: today, description: "Daily subcontract painting services", quantity: "1", unitPrice: "0" }],
+      items: [{ date: "", description: "Daily subcontract painting services", quantity: "1", unitPrice: "0" }],
     },
   });
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "items" });
 
-  const watchCompanyId = form.watch("companyId");
+  // Pre-populate form when payslip loads
   useEffect(() => {
-    if (watchCompanyId && watchCompanyId !== selectedCompanyId) {
-      setSelectedCompanyId(watchCompanyId);
-      form.setValue("employeeId", "");
-    }
-  }, [watchCompanyId, selectedCompanyId, form]);
-
-  const watchEmployeeId = form.watch("employeeId");
-  useEffect(() => {
-    if (watchEmployeeId && employees) {
-      const emp = employees.find(e => e.id.toString() === watchEmployeeId);
-      const rate = (emp as any)?.hourlyRate ? String((emp as any).hourlyRate) : "0";
-      setDefaultHourlyRate(rate);
-      form.getValues("items").forEach((_, idx) => form.setValue(`items.${idx}.unitPrice`, rate));
-    }
-  }, [watchEmployeeId, employees, form]);
+    if (!payslip || ready) return;
+    const hasTax = (payslip.items || []).some((i: any) => parseNum(i.taxRate) > 0);
+    form.reset({
+      month: String(payslip.month),
+      year: String(payslip.year),
+      issueDate: payslip.issueDate || "",
+      dueDate: payslip.dueDate || "",
+      referenceNumber: payslip.referenceNumber || "",
+      includeTax: hasTax,
+      items: (payslip.items && payslip.items.length > 0)
+        ? payslip.items.map((i: any) => ({
+            date: i.date || "",
+            description: i.description || "Daily subcontract painting services",
+            quantity: String(i.quantity || "1"),
+            unitPrice: String(i.unitPrice || "0"),
+          }))
+        : [{ date: "", description: "Daily subcontract painting services", quantity: "1", unitPrice: "0" }],
+    });
+    setReady(true);
+  }, [payslip, form, ready]);
 
   const watchedItems = form.watch("items");
   const includeTax = form.watch("includeTax");
@@ -113,7 +114,10 @@ export default function PayslipForm() {
   const gstAmount = includeTax ? subtotal * 0.1 : 0;
   const totalAmount = subtotal + gstAmount;
 
-  const onSubmit = (data: PayslipFormValues) => {
+  const today = new Date().toISOString().split("T")[0];
+
+  const onSubmit = async (data: PayslipFormValues) => {
+    setSaving(true);
     const taxRate = data.includeTax ? 10 : 0;
     const items = data.items.map((item, idx) => ({
       date: item.date,
@@ -124,34 +128,49 @@ export default function PayslipForm() {
       amount: itemAmounts[idx] || 0,
     }));
     const payload = {
-      companyId: parseInt(data.companyId, 10),
-      employeeId: parseInt(data.employeeId, 10),
       month: parseInt(data.month, 10),
       year: parseInt(data.year, 10),
-      issueDate: data.issueDate || undefined,
-      dueDate: data.dueDate || undefined,
-      referenceNumber: data.referenceNumber || undefined,
+      issueDate: data.issueDate || null,
+      dueDate: data.dueDate || null,
+      referenceNumber: data.referenceNumber || null,
       subtotal, gstAmount, totalAmount,
       grossSalary: subtotal, netSalary: totalAmount,
       items,
     };
-    createPayslip.mutate({ data: payload as any }, {
-      onSuccess: (newPayslip) => {
-        queryClient.invalidateQueries({ queryKey: getListPayslipsQueryKey() });
-        toast({ title: "Invoice created successfully" });
-        setLocation(`/payslips/${newPayslip.id}`);
-      },
-      onError: (err) => toast({ variant: "destructive", title: "Failed to create invoice", description: err.message }),
-    });
+    try {
+      const token = localStorage.getItem("payrollpro_token");
+      const res = await fetch(`${BASE_URL}/api/payslips/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      queryClient.invalidateQueries({ queryKey: getGetPayslipQueryKey(id) });
+      queryClient.invalidateQueries({ queryKey: getListPayslipsQueryKey() });
+      toast({ title: "Invoice updated successfully" });
+      setLocation(`/payslips/${id}`);
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Failed to update", description: err.message });
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (isLoading) return (
+    <div className="flex justify-center items-center h-64">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => setLocation("/payslips")}><ArrowLeft className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" onClick={() => setLocation(`/payslips/${id}`)}><ArrowLeft className="h-4 w-4" /></Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Create Tax Invoice</h1>
-          <p className="text-muted-foreground mt-1">Generate a tax invoice for contractor payment.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Edit Invoice</h1>
+          <p className="text-muted-foreground mt-1">
+            PAY-{String(id).padStart(4, "0")} — {payslip?.employee?.firstName} {payslip?.employee?.lastName}
+          </p>
         </div>
       </div>
 
@@ -163,33 +182,21 @@ export default function PayslipForm() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Company *</Label>
-                  <Select onValueChange={(v) => form.setValue("companyId", v)}>
-                    <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
-                    <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                  {form.formState.errors.companyId && <p className="text-sm text-destructive">{form.formState.errors.companyId.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label>Contractor / Employee *</Label>
-                  <Select onValueChange={(v) => form.setValue("employeeId", v)} disabled={!selectedCompanyId} value={form.watch("employeeId")}>
-                    <SelectTrigger><SelectValue placeholder={selectedCompanyId ? "Select person" : "Select company first"} /></SelectTrigger>
-                    <SelectContent>
-                      {employees?.map(e => <SelectItem key={e.id} value={e.id.toString()}>{e.firstName} {e.lastName}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.employeeId && <p className="text-sm text-destructive">{form.formState.errors.employeeId.message}</p>}
-                </div>
-                <div className="space-y-2">
                   <Label>Month</Label>
-                  <Select onValueChange={(v) => form.setValue("month", v)} defaultValue={form.getValues("month")}>
+                  <Select
+                    onValueChange={(v) => form.setValue("month", v)}
+                    value={form.watch("month")}
+                  >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Year</Label>
-                  <Select onValueChange={(v) => form.setValue("year", v)} defaultValue={form.getValues("year")}>
+                  <Select
+                    onValueChange={(v) => form.setValue("year", v)}
+                    value={form.watch("year")}
+                  >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
                   </Select>
@@ -203,7 +210,7 @@ export default function PayslipForm() {
                   <Input type="date" {...form.register("dueDate")} />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label>Reference (e.g. Painting Work)</Label>
+                  <Label>Reference</Label>
                   <Input placeholder="e.g. Painting Work, Labour Services" {...form.register("referenceNumber")} />
                 </div>
               </div>
@@ -217,7 +224,7 @@ export default function PayslipForm() {
                 <CardTitle>Work Entries</CardTitle>
                 <Button
                   type="button" variant="outline" size="sm"
-                  onClick={() => append({ date: today, description: "Daily subcontract painting services", quantity: "1", unitPrice: defaultHourlyRate })}
+                  onClick={() => append({ date: today, description: "Daily subcontract painting services", quantity: "1", unitPrice: "0" })}
                 >
                   <Plus className="h-4 w-4 mr-2" />Add Entry
                 </Button>
@@ -317,11 +324,11 @@ export default function PayslipForm() {
               </div>
             </CardContent>
             <CardFooter className="border-t p-4 flex flex-col gap-2">
-              <Button type="submit" className="w-full" disabled={createPayslip.isPending}>
-                {createPayslip.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Invoice
+              <Button type="submit" className="w-full" disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
               </Button>
-              <Button type="button" variant="ghost" className="w-full" onClick={() => setLocation("/payslips")}>Cancel</Button>
+              <Button type="button" variant="ghost" className="w-full" onClick={() => setLocation(`/payslips/${id}`)}>Cancel</Button>
             </CardFooter>
           </Card>
         </div>
