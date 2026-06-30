@@ -17,6 +17,11 @@ export default function PayslipPrint() {
 
   useEffect(() => {
     if (payslip && company) {
+      const emp = payslip.employee;
+      const empName = emp ? `${emp.firstName} ${emp.lastName}` : "Invoice";
+      const ref = payslip.referenceNumber ? ` - ${payslip.referenceNumber}` : "";
+      const payNum = `PAY-${String(payslip.id).padStart(4, "0")}`;
+      document.title = `${empName} - ${payNum}${ref}`;
       const t = setTimeout(() => window.print(), 800);
       return () => clearTimeout(t);
     }
