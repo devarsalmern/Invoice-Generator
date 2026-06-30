@@ -26,8 +26,11 @@ export default function PayslipInvoiceView({ payslip, company }: PayslipInvoiceV
   const items: any[] = payslip.items || [];
 
   const subtotal = payslip.subtotal ?? items.reduce((s: number, i: any) => s + (i.amount || 0), 0);
-  const gstAmount = payslip.gstAmount ?? subtotal * 0.1;
+  const gstAmount = payslip.gstAmount ?? 0;
   const totalAmount = payslip.totalAmount ?? subtotal + gstAmount;
+
+  // Only show tax column if any item has a non-zero taxRate
+  const hasTax = items.some((i: any) => parseFloat(i.taxRate ?? 0) > 0);
 
   const payslipNumber = `PAY-${String(payslip.id).padStart(4, "0")}`;
   const verifyUrl = payslip.verificationToken
@@ -99,7 +102,7 @@ export default function PayslipInvoiceView({ payslip, company }: PayslipInvoiceV
             <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-700 w-1/2">Description</th>
             <th className="text-right py-2 px-3 text-xs font-semibold text-gray-700">Quantity</th>
             <th className="text-right py-2 px-3 text-xs font-semibold text-gray-700">Price</th>
-            <th className="text-right py-2 px-3 text-xs font-semibold text-gray-700">Tax</th>
+            {hasTax && <th className="text-right py-2 px-3 text-xs font-semibold text-gray-700">Tax</th>}
             <th className="text-right py-2 pl-3 text-xs font-semibold text-gray-700">Amount</th>
           </tr>
         </thead>
@@ -114,13 +117,12 @@ export default function PayslipInvoiceView({ payslip, company }: PayslipInvoiceV
               </td>
               <td className="py-3 px-3 text-right align-top text-sm">{fmt(item.quantity || 0)}</td>
               <td className="py-3 px-3 text-right align-top text-sm">{fmt(item.unitPrice || 0)}</td>
-              <td className="py-3 px-3 text-right align-top text-sm">{fmt(item.taxRate || 10)}%</td>
+              {hasTax && <td className="py-3 px-3 text-right align-top text-sm">{fmt(parseFloat(item.taxRate ?? 0))}%</td>}
               <td className="py-3 pl-3 text-right align-top text-sm">{fmt(item.amount || 0)}</td>
             </tr>
           )) : (
-            /* Fallback for old-style payslips */
             <tr className="border-b border-gray-100">
-              <td className="py-3 pr-4 text-sm text-gray-500 italic" colSpan={5}>No line items recorded.</td>
+              <td className="py-3 pr-4 text-sm text-gray-500 italic" colSpan={hasTax ? 5 : 4}>No line items recorded.</td>
             </tr>
           )}
         </tbody>

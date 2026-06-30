@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
 import { employeesTable, payslipsTable, invoicesTable, auditLogsTable, usersTable } from "@workspace/db";
-import { eq, and, SQL, count, sum } from "drizzle-orm";
+import { eq, and, SQL, count, sum, desc } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { requireAuth } from "./auth";
 
@@ -114,7 +114,7 @@ router.get("/recent-activity", requireAuth, async (req: Request, res: Response) 
     const companyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
     const limitVal = req.query.limit ? parseInt(req.query.limit as string) : 10;
 
-    const logs = await db.select().from(auditLogsTable).limit(limitVal);
+    const logs = await db.select().from(auditLogsTable).orderBy(desc(auditLogsTable.timestamp)).limit(limitVal);
     const userIds = [...new Set(logs.map(l => l.userId).filter(Boolean) as number[])];
     const users = userIds.length > 0 ? await db.select().from(usersTable) : [];
     const userMap = new Map(users.map(u => [u.id, u]));
