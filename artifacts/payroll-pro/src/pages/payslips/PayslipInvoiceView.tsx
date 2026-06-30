@@ -100,7 +100,7 @@ export default function PayslipInvoiceView({ payslip, company }: PayslipInvoiceV
         <thead>
           <tr className="border-b-2 border-gray-900">
             <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-700 w-1/2">Description</th>
-            <th className="text-right py-2 px-3 text-xs font-semibold text-gray-700">Quantity</th>
+            <th className="text-right py-2 px-3 text-xs font-semibold text-gray-700">Hrs</th>
             <th className="text-right py-2 px-3 text-xs font-semibold text-gray-700">Price</th>
             {hasTax && <th className="text-right py-2 px-3 text-xs font-semibold text-gray-700">Tax</th>}
             <th className="text-right py-2 pl-3 text-xs font-semibold text-gray-700">Amount</th>
@@ -112,7 +112,7 @@ export default function PayslipInvoiceView({ payslip, company }: PayslipInvoiceV
               <td className="py-3 pr-4 align-top">
                 <div className="text-sm">{item.description || "Daily subcontract painting services"}</div>
                 {item.date && (
-                  <div className="text-xs text-gray-500 mt-0.5">Dated: {formatItemDate(item.date)} qty/hours</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Dated: {formatItemDate(item.date)} hrs</div>
                 )}
               </td>
               <td className="py-3 px-3 text-right align-top text-sm">{fmt(item.quantity || 0)}</td>
