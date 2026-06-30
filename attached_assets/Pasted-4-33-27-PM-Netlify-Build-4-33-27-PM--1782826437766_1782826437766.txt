@@ -1,0 +1,64 @@
+4:33:27 PM: Netlify Build                                                 
+4:33:27 PM: ────────────────────────────────────────────────────────────────
+4:33:27 PM: ​
+4:33:27 PM: ❯ Version
+4:33:27 PM:   @netlify/build 36.0.0
+4:33:27 PM: ​
+4:33:27 PM: ❯ Flags
+4:33:27 PM:   accountId: 66d46c4012f6c200773b1e8f
+4:33:27 PM:   baseRelDir: true
+4:33:27 PM:   buildId: 6a43c597c4e2e7a83dece422
+4:33:27 PM:   deployId: 6a43c597c4e2e7a83dece424
+4:33:27 PM:   packagePath: artifacts/mockup-sandbox
+4:33:27 PM: ​
+4:33:27 PM: ❯ Current directory
+4:33:27 PM:   /opt/build/repo
+4:33:27 PM: ​
+4:33:27 PM: ❯ Config file
+4:33:27 PM:   No config file was defined: using default values.
+4:33:27 PM: ​
+4:33:27 PM: ❯ Context
+4:33:27 PM:   production
+4:33:27 PM: ​
+4:33:27 PM: Build command from Netlify app                                
+4:33:27 PM: ────────────────────────────────────────────────────────────────
+4:33:27 PM: ​
+4:33:27 PM: $ pnpm --filter @workspace/mockup-sandbox... run build
+4:33:27 PM: > @workspace/mockup-sandbox@2.0.0 build /opt/build/repo/artifacts/mockup-sandbox
+4:33:27 PM: > vite build
+4:33:27 PM: failed to load config from /opt/build/repo/artifacts/mockup-sandbox/vite.config.ts
+4:33:27 PM: error during build:
+4:33:27 PM: Error: PORT environment variable is required but was not provided.
+4:33:27 PM:     at file:///opt/build/repo/artifacts/mockup-sandbox/node_modules/.vite-temp/vite.config.ts.timestamp-1782826407811-095990eb67474.mjs:145:9
+4:33:27 PM:     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+4:33:27 PM:     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+4:33:27 PM:     at async loadConfigFromBundledFile (file:///opt/build/repo/node_modules/.pnpm/vite@7.3.3_@types+node@25.6.2_jiti@2.7.0_lightningcss@1.32.0_tsx@4.21.0_yaml@2.8.4/node_modules/vite/dist/node/chunks/config.js:35936:12)
+4:33:27 PM:     at async bundleAndLoadConfigFile (file:///opt/build/repo/node_modules/.pnpm/vite@7.3.3_@types+node@25.6.2_jiti@2.7.0_lightningcss@1.32.0_tsx@4.21.0_yaml@2.8.4/node_modules/vite/dist/node/chunks/config.js:35824:17)
+4:33:27 PM:     at async loadConfigFromFile (file:///opt/build/repo/node_modules/.pnpm/vite@7.3.3_@types+node@25.6.2_jiti@2.7.0_lightningcss@1.32.0_tsx@4.21.0_yaml@2.8.4/node_modules/vite/dist/node/chunks/config.js:35791:42)
+4:33:27 PM:     at async resolveConfig (file:///opt/build/repo/node_modules/.pnpm/vite@7.3.3_@types+node@25.6.2_jiti@2.7.0_lightningcss@1.32.0_tsx@4.21.0_yaml@2.8.4/node_modules/vite/dist/node/chunks/config.js:35440:22)
+4:33:27 PM:     at async createBuilder (file:///opt/build/repo/node_modules/.pnpm/vite@7.3.3_@types+node@25.6.2_jiti@2.7.0_lightningcss@1.32.0_tsx@4.21.0_yaml@2.8.4/node_modules/vite/dist/node/chunks/config.js:33895:19)
+4:33:27 PM:     at async CAC.<anonymous> (file:///opt/build/repo/node_modules/.pnpm/vite@7.3.3_@types+node@25.6.2_jiti@2.7.0_lightningcss@1.32.0_tsx@4.21.0_yaml@2.8.4/node_modules/vite/dist/node/cli.js:629:10)
+4:33:27 PM: /opt/build/repo/artifacts/mockup-sandbox:
+4:33:27 PM:  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/mockup-sandbox@2.0.0 build: `vite build`
+4:33:27 PM: Exit status 1
+4:33:28 PM: Failed during stage 'building site': Build script returned non-zero exit code: 2 (https://ntl.fyi/exit-code-2)
+4:33:28 PM: ​
+4:33:28 PM: "build.command" failed                                        
+4:33:28 PM: ────────────────────────────────────────────────────────────────
+4:33:28 PM: ​
+4:33:28 PM:   Error message
+4:33:28 PM:   Command failed with exit code 1: pnpm --filter @workspace/mockup-sandbox... run build (https://ntl.fyi/exit-code-1)
+4:33:28 PM: ​
+4:33:28 PM:   Error location
+4:33:28 PM:   In Build command from Netlify app:
+4:33:28 PM:   pnpm --filter @workspace/mockup-sandbox... run build
+4:33:28 PM: ​
+4:33:28 PM:   Resolved config
+4:33:28 PM:   build:
+4:33:28 PM:     command: pnpm --filter @workspace/mockup-sandbox... run build
+4:33:28 PM:     commandOrigin: ui
+4:33:28 PM:     publish: /opt/build/repo/artifacts/mockup-sandbox/dist
+4:33:28 PM:     publishOrigin: ui
+4:33:28 PM: Build failed due to a user error: Build script returned non-zero exit code: 2
+4:33:28 PM: Failing build: Failed to build site
+4:33:28 PM: Finished processing build request in 15.623s
