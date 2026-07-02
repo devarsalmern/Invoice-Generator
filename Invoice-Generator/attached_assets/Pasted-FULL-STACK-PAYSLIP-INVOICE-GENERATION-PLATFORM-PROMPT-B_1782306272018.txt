@@ -1,0 +1,534 @@
+FULL STACK PAYSLIP & INVOICE GENERATION PLATFORM PROMPT
+
+Build a production-ready SaaS web application called PayrollPro.
+
+The application must allow employers to create payslips and invoices, generate downloadable PDFs, generate QR codes for verification, and allow recipients to scan the QR code and view the original document online.
+
+The design quality should be similar to Xero, QuickBooks, Deel, Remote, and modern payroll software.
+
+Technology Stack
+
+Frontend:
+
+Next.js 15 App Router
+TypeScript
+TailwindCSS
+Shadcn/UI
+React Hook Form
+Zod Validation
+TanStack Query
+
+Backend:
+
+NestJS
+TypeScript
+REST API
+
+Database:
+
+PostgreSQL
+Prisma ORM
+
+Authentication:
+
+JWT Access Tokens
+Refresh Tokens
+Role Based Access Control
+
+Storage:
+
+AWS S3 compatible storage
+
+PDF:
+
+Puppeteer
+HTML templates
+
+QR Codes:
+
+qrcode npm package
+
+Email:
+
+Resend
+
+Deployment:
+
+Frontend: Vercel
+Backend: Railway
+Database: Supabase PostgreSQL
+User Roles
+Super Admin
+
+Can:
+
+Manage companies
+Manage subscriptions
+Manage users
+View audit logs
+View all payslips
+View all invoices
+Employer
+
+Can:
+
+Create employees
+Edit employees
+Create payslips
+Create invoices
+Generate PDFs
+Send documents by email
+View reports
+Employee
+
+Can:
+
+Login
+View payslips
+Download PDFs
+Verify payslips
+Core Modules
+Authentication Module
+
+Features:
+
+Register
+Login
+Forgot password
+Reset password
+Email verification
+JWT authentication
+Refresh tokens
+RBAC
+
+Database:
+
+User
+id
+name
+email
+passwordHash
+role
+companyId
+createdAt
+updatedAt
+Company Module
+
+Database:
+
+Company
+id
+name
+registrationNumber
+taxNumber
+phone
+email
+address
+logoUrl
+createdAt
+updatedAt
+
+Features:
+
+Create company
+Upload logo
+Update company details
+Employee Module
+
+Database:
+
+Employee
+id
+companyId
+employeeNumber
+firstName
+lastName
+email
+phone
+designation
+department
+joiningDate
+bankAccount
+salary
+createdAt
+updatedAt
+
+Features:
+
+CRUD operations
+Search employees
+Filter employees
+Employee profile page
+Payslip Module
+
+Database:
+
+Payslip
+id
+companyId
+employeeId
+
+month
+year
+
+basicSalary
+housingAllowance
+transportAllowance
+bonus
+overtime
+
+tax
+insurance
+otherDeductions
+
+grossSalary
+netSalary
+
+status
+
+pdfUrl
+verificationToken
+
+createdAt
+updatedAt
+
+Features:
+
+Create payslip
+Generate payslip
+Preview payslip
+Download PDF
+Email payslip
+Verify via QR
+Invoice Module
+
+Must replicate professional invoices similar to the attached sample.
+
+Database:
+
+Invoice
+id
+
+companyId
+
+invoiceNumber
+
+customerName
+customerEmail
+customerAddress
+
+issueDate
+dueDate
+
+subtotal
+taxAmount
+totalAmount
+
+status
+
+pdfUrl
+verificationToken
+
+createdAt
+updatedAt
+Invoice Line Items
+InvoiceItem
+id
+
+invoiceId
+
+description
+quantity
+unitPrice
+taxRate
+amount
+PDF Generation
+
+Use Puppeteer.
+
+Generate professional PDFs.
+
+Include:
+
+Company logo
+
+Company details
+
+Customer details
+
+Invoice number
+
+Issue date
+
+Due date
+
+Reference
+
+Line items
+
+Totals
+
+Tax breakdown
+
+Payment information
+
+QR code
+
+Verification URL
+
+Footer
+
+PDF design should look similar to Xero invoices.
+
+QR Verification System
+
+Every payslip and invoice must generate:
+
+verificationToken
+
+Example:
+
+1c7f8e1d-4f22-48c0-a9f9-7f93d63ef111
+
+Public URL:
+
+https://app.payrollpro.com/verify/1c7f8e1d-4f22-48c0-a9f9-7f93d63ef111
+
+Generate QR code pointing to this URL.
+
+Embed QR into PDF.
+
+Verification Page
+
+When QR is scanned:
+
+Display:
+
+Document Verified
+
+Document Type
+Invoice
+
+Status
+Valid
+
+Issued By
+Battor Enterprise Pty Ltd
+
+Invoice Number
+INV-0015
+
+Issue Date
+31 May 2026
+
+Amount
+$891.00
+
+If token invalid:
+
+Verification Failed
+
+Document Not Found
+Email Module
+
+Using Resend.
+
+Employer clicks:
+
+Send Payslip
+
+or
+
+Send Invoice
+
+System:
+
+Generates PDF
+Attaches PDF
+Sends email
+
+Email template:
+
+Professional HTML design.
+
+Dashboard
+
+Show cards:
+
+Total Employees
+
+Total Payslips
+
+Total Invoices
+
+Monthly Payroll
+
+Pending Invoices
+
+Paid Invoices
+
+Include:
+
+Charts
+
+Monthly payroll trends
+
+Invoice trends
+
+Revenue summary
+
+Search & Filters
+
+Employees:
+
+Name
+Department
+Designation
+
+Invoices:
+
+Number
+Status
+Date Range
+
+Payslips:
+
+Month
+Employee
+Year
+Audit Logs
+
+Track:
+
+Created Payslip
+
+Updated Payslip
+
+Deleted Payslip
+
+Generated Invoice
+
+Sent Email
+
+Database:
+
+AuditLog
+id
+userId
+action
+entity
+entityId
+timestamp
+File Storage
+
+Store:
+
+PDFs
+Logos
+
+in S3-compatible storage.
+
+Save URLs in database.
+
+API Endpoints
+
+Create complete REST API.
+
+Examples:
+
+POST /auth/login
+
+POST /companies
+
+GET /companies
+
+POST /employees
+
+GET /employees
+
+POST /payslips
+
+GET /payslips
+
+POST /invoices
+
+GET /invoices
+
+GET /verify/:token
+Frontend Pages
+/login
+
+/dashboard
+
+/companies
+
+/employees
+
+/employees/new
+
+/payslips
+
+/payslips/new
+
+/invoices
+
+/invoices/new
+
+/invoices/[id]
+
+/verify/[token]
+
+/settings
+UI Requirements
+
+Modern SaaS design.
+
+Use:
+
+Responsive layout
+Dark mode
+Loading states
+Error states
+Toast notifications
+Empty states
+Form validation
+Security
+
+Implement:
+
+JWT Authentication
+Password hashing with bcrypt
+RBAC
+Rate limiting
+Helmet
+Input validation
+CSRF protection
+Secure file uploads
+Testing
+
+Create:
+
+Unit tests
+Integration tests
+API tests
+Deliverables
+
+Generate:
+
+Full Prisma schema
+Complete PostgreSQL schema
+Complete NestJS backend
+Complete Next.js frontend
+Authentication system
+PDF generation engine
+QR verification system
+Email service
+Dashboard
+Docker configuration
+Docker Compose
+Seed data
+Environment variables
+README
+Deployment guide
+
+Build the application in a clean enterprise architecture with reusable components, services, repositories, DTOs, validation, error handling, and production-ready code. Do not generate placeholders. Generate complete working code for all modules.

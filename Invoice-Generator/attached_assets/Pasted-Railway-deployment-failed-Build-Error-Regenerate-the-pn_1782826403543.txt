@@ -1,0 +1,36 @@
+Railway deployment failed — Build Error
+
+Regenerate the pnpm lockfile locally by running "pnpm install" and committing the updated pnpm-lock.yaml. The build failed because the "overrides" configuration in pnpm-workspace.yaml does not match what is recorded in pnpm-lock.yaml, and the --frozen-lockfile flag rejects this mismatch. Push the updated lockfile to unblock the build.
+
+Repository: https://github.com/devarsalmern/invoice-generator
+Branch: main · Commit: 48e0870 — full app
+Deployment ID: b2d87e85-137d-428f-8e9a-2fcb336faa97
+Service ID: 83ffdcd0-d0dc-4741-a38b-c44ce01fd4ab
+Environment ID: 8dd5641a-921e-45e9-8fcd-d65ec07be5d4
+
+---
+
+## Problem
+The Railpack builder (pnpm workspace, 9 workspace projects) fails during `pnpm install --frozen-lockfile --prefer-offline` with:
+```
+ERR_PNPM_LOCKFILE_CONFIG_MISMATCH  Cannot proceed with the frozen installation. The current "overrides" configuration doesn't match the value found in the lockfile
+```
+Build stage failed; no deploy logs exist. The start command (`pnpm --filter @workspace/api-server run start`) and healthcheck path (`/api/healthz`) are configured via dashboard settings.
+
+## Diagnosis
+The `pnpm-workspace.yaml` file contains an `overrides` section with ~70+ entries that exclude platform-specific optional dependencies for esbuild, lightningcss, @tailwindcss/oxide, rollup, and @expo/ngrok-bin, plus an esbuild version pin to 0.27.3. The `pnpm-lock.yaml` was generated at a time when the overrides were different (or absent). When pnpm runs with `--frozen-lockfile`, it compares the current overrides config against what is stored in the lockfile header and rejects the mismatch.
+
+## Fix
+1. **File:** `pnpm-lock.yaml` (repo root)
+2. **Action:** This file must be regenerated — it cannot be manually edited. Run the following locally:
+   ```bash
+   pnpm install
+   ```
+   This will update `pnpm-lock.yaml` to reflect the current `overrides` in `pnpm-workspace.yaml`.
+3. **Then:** Commit and push the updated `pnpm-lock.yaml`:
+   ```bash
+   git add pnpm-lock.yaml
+   git commit -m "chore: regenerate lockfile to match workspace overrides"
+   git push
+   ```
+4. **Why:** The frozen lockfile check will pass once the lockfile's recorded overrides match the workspace config.
