@@ -177,7 +177,7 @@ export default function PayslipForm() {
   );
   const subtotal = itemAmounts.reduce((s, a) => s + a, 0);
   const taxAmount = includeTax ? subtotal * (taxPercentage / 100) : 0;
-  const totalAmount = subtotal + taxAmount;
+  const totalAmount = Math.max(0, subtotal - taxAmount);
 
   const onSubmit = (data: PayslipFormValues) => {
     const taxRate = data.includeTax
@@ -529,7 +529,7 @@ export default function PayslipForm() {
                   <span>
                     {taxName || "Tax"} ({taxPercentage}%)
                   </span>
-                  <span>${fmt2(taxAmount)}</span>
+                  <span>{`-$${fmt2(taxAmount)}`}</span>
                 </div>
               )}
               <Separator />

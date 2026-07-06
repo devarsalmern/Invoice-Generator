@@ -59,6 +59,7 @@ const fmt = (p: any, employee?: any, items?: any[]) => ({
   issueDate: p.issueDate,
   dueDate: p.dueDate,
   referenceNumber: p.referenceNumber,
+  status: p.status,
   basicSalary: parseFloat(p.basicSalary || "0"),
   housingAllowance: parseFloat(p.housingAllowance || "0"),
   transportAllowance: parseFloat(p.transportAllowance || "0"),
@@ -66,6 +67,13 @@ const fmt = (p: any, employee?: any, items?: any[]) => ({
   overtime: parseFloat(p.overtime || "0"),
   taxName: p.taxName,
   taxPercentage: p.taxPercentage ? parseFloat(p.taxPercentage) : null,
+  subtotal: parseFloat(p.subtotal || "0"),
+  gstAmount: parseFloat(p.gstAmount || "0"),
+  totalAmount: parseFloat(p.totalAmount || p.netSalary || "0"),
+  grossSalary: parseFloat(p.grossSalary || p.subtotal || "0"),
+  netSalary: parseFloat(p.netSalary || p.totalAmount || "0"),
+  pdfUrl: p.pdfUrl,
+  verificationToken: p.verificationToken,
   items: items ? items.map(fmtItem) : [],
   createdAt: p.createdAt?.toISOString?.() ?? p.createdAt,
   updatedAt: p.updatedAt?.toISOString?.() ?? p.updatedAt,
@@ -192,15 +200,13 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
       );
     }
 
-    await db
-      .insert(auditLogsTable)
-      .values({
-        userId: user.id,
-        action: "Created Payslip",
-        entity: "payslip",
-        entityId: payslip.id,
-        description: `Payslip for employee ${employeeId} month ${month}/${year}`,
-      });
+    await db.insert(auditLogsTable).values({
+      userId: user.id,
+      action: "Created Payslip",
+      entity: "payslip",
+      entityId: payslip.id,
+      description: `Payslip for employee ${employeeId} month ${month}/${year}`,
+    });
     const [employee] = await db
       .select()
       .from(employeesTable)
@@ -332,14 +338,12 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
       }
     }
 
-    await db
-      .insert(auditLogsTable)
-      .values({
-        userId: user.id,
-        action: "Updated Payslip",
-        entity: "payslip",
-        entityId: payslip.id,
-      });
+    await db.insert(auditLogsTable).values({
+      userId: user.id,
+      action: "Updated Payslip",
+      entity: "payslip",
+      entityId: payslip.id,
+    });
     const [employee] = await db
       .select()
       .from(employeesTable)
@@ -364,14 +368,12 @@ router.delete("/:id", requireAuth, async (req: Request, res: Response) => {
       .delete(payslipItemsTable)
       .where(eq(payslipItemsTable.payslipId, id));
     await db.delete(payslipsTable).where(eq(payslipsTable.id, id));
-    await db
-      .insert(auditLogsTable)
-      .values({
-        userId: user.id,
-        action: "Deleted Payslip",
-        entity: "payslip",
-        entityId: id,
-      });
+    await db.insert(auditLogsTable).values({
+      userId: user.id,
+      action: "Deleted Payslip",
+      entity: "payslip",
+      entityId: id,
+    });
     res.status(204).send();
   } catch (err) {
     logger.error({ err }, "Delete payslip error");
@@ -407,14 +409,12 @@ router.post(
         })
         .where(eq(payslipsTable.id, id))
         .returning();
-      await db
-        .insert(auditLogsTable)
-        .values({
-          userId: user.id,
-          action: "Generated PDF",
-          entity: "payslip",
-          entityId: id,
-        });
+      await db.insert(auditLogsTable).values({
+        userId: user.id,
+        action: "Generated PDF",
+        entity: "payslip",
+        entityId: id,
+      });
       res.json({
         pdfUrl: updated.pdfUrl!,
         verificationToken: updated.verificationToken!,
@@ -446,14 +446,12 @@ router.post(
         .update(payslipsTable)
         .set({ status: "sent", updatedAt: new Date() })
         .where(eq(payslipsTable.id, id));
-      await db
-        .insert(auditLogsTable)
-        .values({
-          userId: user.id,
-          action: "Sent Payslip Email",
-          entity: "payslip",
-          entityId: id,
-        });
+      await db.insert(auditLogsTable).values({
+        userId: user.id,
+        action: "Sent Payslip Email",
+        entity: "payslip",
+        entityId: id,
+      });
       res.json({ success: true });
     } catch (err) {
       logger.error({ err }, "Send payslip email error");

@@ -6,8 +6,13 @@ interface PayslipInvoiceViewProps {
   company: any;
 }
 
-const fmt = (n: number) => n.toFixed(2);
-const fmtAud = (n: number) => `$${n.toFixed(2)}`;
+const toNumber = (value: unknown) => {
+  const n =
+    typeof value === "number" ? value : parseFloat(String(value ?? "0"));
+  return Number.isFinite(n) ? n : 0;
+};
+const fmt = (n: unknown) => toNumber(n).toFixed(2);
+const fmtAud = (n: unknown) => `$${fmt(n)}`;
 
 const formatDisplayDate = (dateStr: string | undefined | null): string => {
   if (!dateStr) return "—";
@@ -33,10 +38,14 @@ export default function PayslipInvoiceView({
   const items: any[] = payslip.items || [];
 
   const subtotal =
-    payslip.subtotal ??
-    items.reduce((s: number, i: any) => s + (i.amount || 0), 0);
-  const gstAmount = payslip.gstAmount ?? 0;
-  const totalAmount = payslip.totalAmount ?? subtotal + gstAmount;
+    payslip.subtotal !== undefined && payslip.subtotal !== null
+      ? toNumber(payslip.subtotal)
+      : items.reduce((s: number, i: any) => s + toNumber(i.amount), 0);
+  const gstAmount = toNumber(payslip.gstAmount);
+  const totalAmount =
+    payslip.totalAmount !== undefined && payslip.totalAmount !== null
+      ? toNumber(payslip.totalAmount)
+      : Math.max(0, subtotal - gstAmount);
 
   // Only show tax column if any item has a non-zero taxRate
   const hasTax = items.some((i: any) => parseFloat(i.taxRate ?? 0) > 0);
@@ -182,18 +191,18 @@ export default function PayslipInvoiceView({
                   )}
                 </td>
                 <td className="py-3 px-3 text-right align-top text-sm">
-                  {fmt(item.quantity || 0)}
+                  {fmt(item.quantity)}
                 </td>
                 <td className="py-3 px-3 text-right align-top text-sm">
-                  {fmt(item.unitPrice || 0)}
+                  {fmt(item.unitPrice)}
                 </td>
                 {hasTax && (
                   <td className="py-3 px-3 text-right align-top text-sm">
-                    {fmt(parseFloat(item.taxRate ?? 0))}%
+                    {fmt(item.taxRate)}%
                   </td>
                 )}
                 <td className="py-3 pl-3 text-right align-top text-sm">
-                  {fmt(item.amount || 0)}
+                  {fmt(item.amount)}
                 </td>
               </tr>
             ))
@@ -223,7 +232,7 @@ export default function PayslipInvoiceView({
                 <span className="text-gray-600">
                   {payslip.taxName || "Tax"} ({payslip.taxPercentage ?? 0}%)
                 </span>
-                <span>{fmt(gstAmount)}</span>
+                <span>-{fmt(gstAmount)}</span>
               </div>
               <div className="flex justify-between py-1.5 text-sm border-t border-gray-200 mt-1">
                 <span className="text-gray-600">Total</span>
