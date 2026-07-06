@@ -1,5 +1,6 @@
 import { AppLayout } from "./components/layout/AppLayout";
 import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -58,63 +59,135 @@ function Router() {
       </Route>
 
       <Route path="/dashboard">
-        {() => <AppLayout><ProtectedRoute component={Dashboard} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={Dashboard} />
+          </AppLayout>
+        )}
       </Route>
 
       <Route path="/companies">
-        {() => <AppLayout><ProtectedRoute component={CompanyList} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={CompanyList} />
+          </AppLayout>
+        )}
       </Route>
       <Route path="/companies/new">
-        {() => <AppLayout><ProtectedRoute component={CompanyForm} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={CompanyForm} />
+          </AppLayout>
+        )}
       </Route>
       <Route path="/companies/:id/edit">
-        {() => <AppLayout><ProtectedRoute component={CompanyForm} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={CompanyForm} />
+          </AppLayout>
+        )}
       </Route>
       <Route path="/companies/:id">
-        {() => <AppLayout><ProtectedRoute component={CompanyDetail} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={CompanyDetail} />
+          </AppLayout>
+        )}
       </Route>
 
       <Route path="/employees">
-        {() => <AppLayout><ProtectedRoute component={EmployeeList} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={EmployeeList} />
+          </AppLayout>
+        )}
       </Route>
       <Route path="/employees/new">
-        {() => <AppLayout><ProtectedRoute component={EmployeeForm} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={EmployeeForm} />
+          </AppLayout>
+        )}
       </Route>
       <Route path="/employees/:id/edit">
-        {() => <AppLayout><ProtectedRoute component={EmployeeForm} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={EmployeeForm} />
+          </AppLayout>
+        )}
       </Route>
       <Route path="/employees/:id">
-        {() => <AppLayout><ProtectedRoute component={EmployeeDetail} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={EmployeeDetail} />
+          </AppLayout>
+        )}
       </Route>
 
       <Route path="/payslips">
-        {() => <AppLayout><ProtectedRoute component={PayslipList} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={PayslipList} />
+          </AppLayout>
+        )}
       </Route>
       <Route path="/payslips/new">
-        {() => <AppLayout><ProtectedRoute component={PayslipForm} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={PayslipForm} />
+          </AppLayout>
+        )}
       </Route>
       <Route path="/payslips/:id/edit">
-        {() => <AppLayout><ProtectedRoute component={PayslipEditForm} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={PayslipEditForm} />
+          </AppLayout>
+        )}
       </Route>
       <Route path="/payslips/:id">
-        {() => <AppLayout><ProtectedRoute component={PayslipDetail} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={PayslipDetail} />
+          </AppLayout>
+        )}
       </Route>
 
       <Route path="/invoices">
-        {() => <AppLayout><ProtectedRoute component={InvoiceList} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={InvoiceList} />
+          </AppLayout>
+        )}
       </Route>
       <Route path="/invoices/new">
-        {() => <AppLayout><ProtectedRoute component={InvoiceForm} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={InvoiceForm} />
+          </AppLayout>
+        )}
       </Route>
       <Route path="/invoices/:id">
-        {() => <AppLayout><ProtectedRoute component={InvoiceDetail} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={InvoiceDetail} />
+          </AppLayout>
+        )}
       </Route>
 
       <Route path="/audit-logs">
-        {() => <AppLayout><ProtectedRoute component={AuditLogsList} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={AuditLogsList} />
+          </AppLayout>
+        )}
       </Route>
       <Route path="/settings">
-        {() => <AppLayout><ProtectedRoute component={Settings} /></AppLayout>}
+        {() => (
+          <AppLayout>
+            <ProtectedRoute component={Settings} />
+          </AppLayout>
+        )}
       </Route>
 
       <Route>
@@ -126,16 +199,18 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Router />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
