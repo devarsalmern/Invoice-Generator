@@ -1,11 +1,4 @@
-import {
-  pgTable,
-  serial,
-  text,
-  timestamp,
-  integer,
-  numeric,
-} from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, integer, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -22,7 +15,6 @@ export const employeesTable = pgTable("employees", {
   joiningDate: text("joining_date"),
   address: text("address"),
   abn: text("abn"),
-  tfn: text("tfn"),
   bankAccount: text("bank_account"),
   bsb: text("bsb"),
   salary: numeric("salary", { precision: 12, scale: 2 }),
@@ -31,10 +23,6 @@ export const employeesTable = pgTable("employees", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertEmployeeSchema = createInsertSchema(employeesTable).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertEmployeeSchema = createInsertSchema(employeesTable).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
 export type Employee = typeof employeesTable.$inferSelect;
