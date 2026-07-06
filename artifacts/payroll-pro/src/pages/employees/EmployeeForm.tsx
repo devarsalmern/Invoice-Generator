@@ -1,4 +1,4 @@
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation, useRoute } from "wouter";
@@ -312,29 +312,22 @@ export default function EmployeeForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="companyId">Company *</Label>
-                  <Controller
-                    name="companyId"
-                    control={form.control}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={(value) => field.onChange(value)}
-                        onBlur={field.onBlur}
-                        disabled={isEditing}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select company" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {companies?.map((c) => (
-                            <SelectItem key={c.id} value={c.id.toString()}>
-                              {c.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
+                  <Select
+                    onValueChange={(v) => form.setValue("companyId", v)}
+                    value={form.watch("companyId")}
+                    disabled={isEditing}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companies?.map((c) => (
+                        <SelectItem key={c.id} value={c.id.toString()}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {form.formState.errors.companyId && (
                     <p className="text-sm text-destructive">
                       {form.formState.errors.companyId.message}

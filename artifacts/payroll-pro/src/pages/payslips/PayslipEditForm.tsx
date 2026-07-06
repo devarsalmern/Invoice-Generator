@@ -73,6 +73,10 @@ const months = [
   { value: "12", label: "December" },
 ];
 
+const API_BASE_URL =
+  (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ||
+  "";
+
 export default function PayslipEditForm() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute("/payslips/:id/edit");
@@ -203,7 +207,7 @@ export default function PayslipEditForm() {
     };
     try {
       const token = localStorage.getItem("payrollpro_token");
-      const res = await fetch(`/api/payslips/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/payslips/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
