@@ -45,6 +45,7 @@ const payslipSchema = z.object({
   dueDate: z.string().optional(),
   referenceNumber: z.string().optional(),
   includeTax: z.boolean(),
+  showTfn: z.boolean(),
   taxName: z.string().optional(),
   taxPercentage: z.string().optional(),
   items: z.array(itemSchema).min(1, "At least one line item is required"),
@@ -109,6 +110,7 @@ export default function PayslipEditForm() {
       dueDate: "",
       referenceNumber: "",
       includeTax: false,
+      showTfn: false,
       taxName: "GST",
       taxPercentage: "10",
       items: [
@@ -140,6 +142,7 @@ export default function PayslipEditForm() {
       dueDate: payslip.dueDate || "",
       referenceNumber: payslip.referenceNumber || "",
       includeTax: hasTax,
+      showTfn: Boolean((payslip as any).showTfn),
       taxName: payslip.taxName || "GST",
       taxPercentage: String(payslip.taxPercentage ?? (hasTax ? 10 : 0)),
       items:
@@ -165,6 +168,7 @@ export default function PayslipEditForm() {
 
   const watchedItems = form.watch("items");
   const includeTax = form.watch("includeTax");
+  const showTfn = form.watch("showTfn");
   const taxName = form.watch("taxName") || "GST";
   const taxPercentage = Math.max(0, parseNum(form.watch("taxPercentage")));
   const itemAmounts = watchedItems.map(
@@ -195,6 +199,7 @@ export default function PayslipEditForm() {
       issueDate: data.issueDate || null,
       dueDate: data.dueDate || null,
       referenceNumber: data.referenceNumber || null,
+      showTfn: data.showTfn,
       taxName: data.taxName || undefined,
       taxPercentage: data.includeTax ? taxRate : 0,
       subtotal,
@@ -425,7 +430,23 @@ export default function PayslipEditForm() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-3 text-sm">
-              {/* GST Toggle */}
+              {/* Display options */}
+              <div className="space-y-4 pb-3 border-b">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-sm">Display TFN</div>
+                    <div className="text-xs text-muted-foreground">
+                      Show employee TFN below ABN on this invoice
+                    </div>
+                  </div>
+                  <Switch
+                    checked={showTfn}
+                    onCheckedChange={(v) => form.setValue("showTfn", v)}
+                  />
+                </div>
+              </div>
+
+              {/* Tax options */}
               <div className="space-y-4 pb-3 border-b">
                 <div className="flex items-center justify-between">
                   <div>

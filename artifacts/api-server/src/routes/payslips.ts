@@ -67,6 +67,7 @@ const fmt = (p: any, employee?: any, items?: any[]) => ({
   overtime: parseFloat(p.overtime || "0"),
   taxName: p.taxName,
   taxPercentage: p.taxPercentage ? parseFloat(p.taxPercentage) : null,
+  showTfn: Boolean(p.showTfn),
   subtotal: parseFloat(p.subtotal || "0"),
   gstAmount: parseFloat(p.gstAmount || "0"),
   totalAmount: parseFloat(p.totalAmount || p.netSalary || "0"),
@@ -131,6 +132,7 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
       referenceNumber,
       taxName,
       taxPercentage,
+      showTfn,
       basicSalary,
       housingAllowance,
       transportAllowance,
@@ -180,6 +182,7 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
         taxName: taxName || null,
         taxPercentage:
           taxPercentage !== undefined ? String(taxPercentage) : null,
+        showTfn: Boolean(showTfn),
         verificationToken,
       })
       .returning();
@@ -262,6 +265,7 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
       overtime,
       taxName,
       taxPercentage,
+      showTfn,
       tax,
       insurance,
       otherDeductions,
@@ -292,6 +296,7 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
     if (taxName !== undefined) updates.taxName = taxName || null;
     if (taxPercentage !== undefined)
       updates.taxPercentage = String(taxPercentage);
+    if (showTfn !== undefined) updates.showTfn = Boolean(showTfn);
     if (tax !== undefined) updates.tax = String(tax);
     if (insurance !== undefined) updates.insurance = String(insurance);
     if (otherDeductions !== undefined)

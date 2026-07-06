@@ -1,6 +1,12 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
-import { payslipsTable, payslipItemsTable, invoicesTable, companiesTable, employeesTable } from "@workspace/db";
+import {
+  payslipsTable,
+  payslipItemsTable,
+  invoicesTable,
+  companiesTable,
+  employeesTable,
+} from "@workspace/db";
 import { eq, desc, ne } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
@@ -12,11 +18,23 @@ router.get("/:token", async (req: Request, res: Response) => {
     const { token } = req.params;
 
     // --- Payslip lookup ---
-    const [payslip] = await db.select().from(payslipsTable).where(eq(payslipsTable.verificationToken, token));
+    const [payslip] = await db
+      .select()
+      .from(payslipsTable)
+      .where(eq(payslipsTable.verificationToken, token));
     if (payslip) {
-      const [company] = await db.select().from(companiesTable).where(eq(companiesTable.id, payslip.companyId));
-      const [employee] = await db.select().from(employeesTable).where(eq(employeesTable.id, payslip.employeeId));
-      const items = await db.select().from(payslipItemsTable).where(eq(payslipItemsTable.payslipId, payslip.id));
+      const [company] = await db
+        .select()
+        .from(companiesTable)
+        .where(eq(companiesTable.id, payslip.companyId));
+      const [employee] = await db
+        .select()
+        .from(employeesTable)
+        .where(eq(employeesTable.id, payslip.employeeId));
+      const items = await db
+        .select()
+        .from(payslipItemsTable)
+        .where(eq(payslipItemsTable.payslipId, payslip.id));
 
       // Past payslips for this employee (all except the current one)
       const pastPayslips = await db
@@ -25,7 +43,8 @@ router.get("/:token", async (req: Request, res: Response) => {
         .where(eq(payslipsTable.employeeId, payslip.employeeId))
         .orderBy(desc(payslipsTable.issueDate), desc(payslipsTable.id));
 
-      const parseNum = (v: any) => (v !== null && v !== undefined ? parseFloat(v) : 0);
+      const parseNum = (v: any) =>
+        v !== null && v !== undefined ? parseFloat(v) : 0;
 
       res.json({
         valid: true,
@@ -45,8 +64,9 @@ router.get("/:token", async (req: Request, res: Response) => {
           grossSalary: parseNum(payslip.grossSalary),
           netSalary: parseNum(payslip.netSalary),
           status: payslip.status,
+          showTfn: Boolean(payslip.showTfn),
           verificationToken: payslip.verificationToken,
-          items: items.map(i => ({
+          items: items.map((i) => ({
             id: i.id,
             date: i.date,
             description: i.description,
@@ -55,27 +75,32 @@ router.get("/:token", async (req: Request, res: Response) => {
             taxRate: parseNum(i.taxRate),
             amount: parseNum(i.amount),
           })),
-          employee: employee ? {
-            id: employee.id,
-            firstName: employee.firstName,
-            lastName: employee.lastName,
-            email: employee.email,
-            address: (employee as any).address ?? null,
-            abn: (employee as any).abn ?? null,
-            bsb: (employee as any).bsb ?? null,
-            bankAccount: employee.bankAccount ?? null,
-          } : null,
+          employee: employee
+            ? {
+                id: employee.id,
+                firstName: employee.firstName,
+                lastName: employee.lastName,
+                email: employee.email,
+                address: (employee as any).address ?? null,
+                abn: (employee as any).abn ?? null,
+                tfn: (employee as any).tfn ?? null,
+                bsb: (employee as any).bsb ?? null,
+                bankAccount: employee.bankAccount ?? null,
+              }
+            : null,
         },
-        company: company ? {
-          id: company.id,
-          name: company.name,
-          taxNumber: company.taxNumber,
-          email: company.email,
-          phone: company.phone,
-          address: company.address,
-          logo: company.logo,
-        } : null,
-        history: pastPayslips.map(p => ({
+        company: company
+          ? {
+              id: company.id,
+              name: company.name,
+              taxNumber: company.taxNumber,
+              email: company.email,
+              phone: company.phone,
+              address: company.address,
+              logo: company.logo,
+            }
+          : null,
+        history: pastPayslips.map((p) => ({
           id: p.id,
           month: p.month,
           year: p.year,
@@ -91,20 +116,28 @@ router.get("/:token", async (req: Request, res: Response) => {
     }
 
     // --- Invoice lookup ---
-    const [invoice] = await db.select().from(invoicesTable).where(eq(invoicesTable.verificationToken, token));
+    const [invoice] = await db
+      .select()
+      .from(invoicesTable)
+      .where(eq(invoicesTable.verificationToken, token));
     if (invoice) {
-      const [company] = await db.select().from(companiesTable).where(eq(companiesTable.id, invoice.companyId));
+      const [company] = await db
+        .select()
+        .from(companiesTable)
+        .where(eq(companiesTable.id, invoice.companyId));
       res.json({
         valid: true,
         documentType: "invoice",
         payslip: null,
-        company: company ? {
-          id: company.id,
-          name: company.name,
-          taxNumber: company.taxNumber,
-          email: company.email,
-          phone: company.phone,
-        } : null,
+        company: company
+          ? {
+              id: company.id,
+              name: company.name,
+              taxNumber: company.taxNumber,
+              email: company.email,
+              phone: company.phone,
+            }
+          : null,
         history: [],
         // Legacy fields for backward compat
         status: invoice.status,
@@ -116,7 +149,13 @@ router.get("/:token", async (req: Request, res: Response) => {
       return;
     }
 
-    res.json({ valid: false, documentType: null, payslip: null, company: null, history: [] });
+    res.json({
+      valid: false,
+      documentType: null,
+      payslip: null,
+      company: null,
+      history: [],
+    });
   } catch (err) {
     logger.error({ err }, "Verify document error");
     res.status(500).json({ error: "Internal server error" });

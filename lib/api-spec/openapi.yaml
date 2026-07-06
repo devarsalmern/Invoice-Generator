@@ -984,6 +984,8 @@ components:
           type: string
         taxPercentage:
           type: number
+        showTfn:
+          type: boolean
         tax:
           type: number
         insurance:
@@ -1037,6 +1039,12 @@ components:
           type: number
         overtime:
           type: number
+        taxName:
+          type: string
+        taxPercentage:
+          type: number
+        showTfn:
+          type: boolean
         tax:
           type: number
         insurance:
@@ -1065,6 +1073,8 @@ components:
           type: string
         taxPercentage:
           type: number
+        showTfn:
+          type: boolean
         tax:
           type: number
         insurance:

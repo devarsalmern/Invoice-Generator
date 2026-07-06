@@ -5,6 +5,7 @@ import {
   timestamp,
   integer,
   numeric,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -37,6 +38,7 @@ export const payslipsTable = pgTable("payslips", {
   tax: numeric("tax", { precision: 12, scale: 2 }).notNull().default("0"),
   taxName: text("tax_name"),
   taxPercentage: numeric("tax_percentage", { precision: 5, scale: 2 }),
+  showTfn: boolean("show_tfn").notNull().default(false),
   insurance: numeric("insurance", { precision: 12, scale: 2 })
     .notNull()
     .default("0"),

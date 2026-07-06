@@ -97,6 +97,11 @@ export default function PayslipInvoiceView({
                 ABN: {(emp as any).abn}
               </div>
             )}
+            {payslip.showTfn && (emp as any).tfn && (
+              <div className="text-gray-600 text-xs">
+                TFN: {(emp as any).tfn}
+              </div>
+            )}
           </div>
         )}
       </div>
