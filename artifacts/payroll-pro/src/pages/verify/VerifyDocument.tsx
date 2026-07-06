@@ -11,10 +11,6 @@ import {
 import { format } from "date-fns";
 import PayslipInvoiceView from "../payslips/PayslipInvoiceView";
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ||
-  "";
-
 function fmtAud(n: number) {
   return `AUD $${(n || 0).toFixed(2)}`;
 }
@@ -50,14 +46,9 @@ export default function VerifyDocument() {
       setLoading(false);
       return;
     }
-    if (!API_BASE_URL) {
-      setError(true);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError(false);
-    fetch(`${API_BASE_URL}/api/verify/${token}`)
+    fetch(`/api/verify/${token}`)
       .then((r) => r.json())
       .then((d) => {
         setData(d);
