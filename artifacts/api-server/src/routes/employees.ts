@@ -20,6 +20,7 @@ const fmt = (e: any) => ({
   joiningDate: e.joiningDate,
   address: e.address,
   abn: e.abn,
+  tfn: e.tfn,
   bankAccount: e.bankAccount,
   bsb: e.bsb,
   salary: e.salary ? parseFloat(e.salary) : null,
@@ -33,24 +34,33 @@ router.get("/", requireAuth, async (req: Request, res: Response) => {
   try {
     const { companyId, search, department, designation } = req.query;
     const conditions: SQL[] = [];
-    if (companyId) conditions.push(eq(employeesTable.companyId, parseInt(companyId as string)));
-    if (department) conditions.push(eq(employeesTable.department, department as string));
-    if (designation) conditions.push(eq(employeesTable.designation, designation as string));
+    if (companyId)
+      conditions.push(
+        eq(employeesTable.companyId, parseInt(companyId as string)),
+      );
+    if (department)
+      conditions.push(eq(employeesTable.department, department as string));
+    if (designation)
+      conditions.push(eq(employeesTable.designation, designation as string));
 
     let employees;
     if (conditions.length > 0) {
-      employees = await db.select().from(employeesTable).where(and(...conditions));
+      employees = await db
+        .select()
+        .from(employeesTable)
+        .where(and(...conditions));
     } else {
       employees = await db.select().from(employeesTable);
     }
 
     if (search) {
       const s = (search as string).toLowerCase();
-      employees = employees.filter(e =>
-        e.firstName.toLowerCase().includes(s) ||
-        e.lastName.toLowerCase().includes(s) ||
-        e.email.toLowerCase().includes(s) ||
-        (e.employeeNumber?.toLowerCase().includes(s))
+      employees = employees.filter(
+        (e) =>
+          e.firstName.toLowerCase().includes(s) ||
+          e.lastName.toLowerCase().includes(s) ||
+          e.email.toLowerCase().includes(s) ||
+          e.employeeNumber?.toLowerCase().includes(s),
       );
     }
 
@@ -64,20 +74,50 @@ router.get("/", requireAuth, async (req: Request, res: Response) => {
 // POST /employees
 router.post("/", requireAuth, async (req: Request, res: Response) => {
   try {
-    const { companyId, employeeNumber, firstName, lastName, email, phone, designation, department, joiningDate, address, abn, bankAccount, bsb, salary, hourlyRate } = req.body;
+    const {
+      companyId,
+      employeeNumber,
+      firstName,
+      lastName,
+      email,
+      phone,
+      designation,
+      department,
+      joiningDate,
+      address,
+      abn,
+      tfn,
+      bankAccount,
+      bsb,
+      salary,
+      hourlyRate,
+    } = req.body;
     if (!companyId || !firstName || !lastName || !email) {
-      res.status(400).json({ error: "companyId, firstName, lastName, email are required" });
+      res
+        .status(400)
+        .json({ error: "companyId, firstName, lastName, email are required" });
       return;
     }
-    const [employee] = await db.insert(employeesTable).values({
-      companyId, employeeNumber, firstName, lastName, email, phone, designation, department, joiningDate,
-      address: address || null,
-      abn: abn || null,
-      bankAccount: bankAccount || null,
-      bsb: bsb || null,
-      salary: salary ? String(salary) : null,
-      hourlyRate: hourlyRate ? String(hourlyRate) : null,
-    }).returning();
+    const [employee] = await db
+      .insert(employeesTable)
+      .values({
+        companyId,
+        employeeNumber,
+        firstName,
+        lastName,
+        email,
+        phone,
+        designation,
+        department,
+        joiningDate,
+        address: address || null,
+        abn: abn || null,
+        bankAccount: bankAccount || null,
+        bsb: bsb || null,
+        salary: salary ? String(salary) : null,
+        hourlyRate: hourlyRate ? String(hourlyRate) : null,
+      })
+      .returning();
     res.status(201).json(fmt(employee));
   } catch (err) {
     logger.error({ err }, "Create employee error");
@@ -89,8 +129,14 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
 router.get("/:id", requireAuth, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
-    const [employee] = await db.select().from(employeesTable).where(eq(employeesTable.id, id));
-    if (!employee) { res.status(404).json({ error: "Not found" }); return; }
+    const [employee] = await db
+      .select()
+      .from(employeesTable)
+      .where(eq(employeesTable.id, id));
+    if (!employee) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
     res.json(fmt(employee));
   } catch (err) {
     logger.error({ err }, "Get employee error");
@@ -102,12 +148,37 @@ router.get("/:id", requireAuth, async (req: Request, res: Response) => {
 router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
-    const { employeeNumber, firstName, lastName, email, phone, designation, department, joiningDate, address, abn, bankAccount, bsb, salary, hourlyRate } = req.body;
-    const [employee] = await db.update(employeesTable)
+    const {
+      employeeNumber,
+      firstName,
+      lastName,
+      email,
+      phone,
+      designation,
+      department,
+      joiningDate,
+      address,
+      abn,
+      tfn,
+      bankAccount,
+      bsb,
+      salary,
+      hourlyRate,
+    } = req.body;
+    const [employee] = await db
+      .update(employeesTable)
       .set({
-        employeeNumber, firstName, lastName, email, phone, designation, department, joiningDate,
+        employeeNumber,
+        firstName,
+        lastName,
+        email,
+        phone,
+        designation,
+        department,
+        joiningDate,
         address: address !== undefined ? address : undefined,
         abn: abn !== undefined ? abn : undefined,
+        tfn: tfn !== undefined ? tfn : undefined,
         bankAccount: bankAccount !== undefined ? bankAccount : undefined,
         bsb: bsb !== undefined ? bsb : undefined,
         salary: salary !== undefined ? String(salary) : undefined,
@@ -116,7 +187,10 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
       })
       .where(eq(employeesTable.id, id))
       .returning();
-    if (!employee) { res.status(404).json({ error: "Not found" }); return; }
+    if (!employee) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
     res.json(fmt(employee));
   } catch (err) {
     logger.error({ err }, "Update employee error");

@@ -945,7 +945,18 @@ components:
     # PAYSLIP
     Payslip:
       type: object
-      required: [id, companyId, employeeId, month, year, grossSalary, netSalary, status, createdAt]
+      required:
+        [
+          id,
+          companyId,
+          employeeId,
+          month,
+          year,
+          grossSalary,
+          netSalary,
+          status,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
@@ -968,6 +979,10 @@ components:
         bonus:
           type: number
         overtime:
+          type: number
+        taxName:
+          type: string
+        taxPercentage:
           type: number
         tax:
           type: number
@@ -993,7 +1008,16 @@ components:
 
     PayslipInput:
       type: object
-      required: [companyId, employeeId, month, year, basicSalary, grossSalary, netSalary]
+      required:
+        [
+          companyId,
+          employeeId,
+          month,
+          year,
+          basicSalary,
+          grossSalary,
+          netSalary,
+        ]
       properties:
         companyId:
           type: integer
@@ -1036,6 +1060,10 @@ components:
         bonus:
           type: number
         overtime:
+          type: number
+        taxName:
+          type: string
+        taxPercentage:
           type: number
         tax:
           type: number
@@ -1087,7 +1115,20 @@ components:
 
     Invoice:
       type: object
-      required: [id, companyId, invoiceNumber, customerName, issueDate, dueDate, subtotal, taxAmount, totalAmount, status, createdAt]
+      required:
+        [
+          id,
+          companyId,
+          invoiceNumber,
+          customerName,
+          issueDate,
+          dueDate,
+          subtotal,
+          taxAmount,
+          totalAmount,
+          status,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
@@ -1129,7 +1170,17 @@ components:
 
     InvoiceInput:
       type: object
-      required: [companyId, customerName, issueDate, dueDate, subtotal, taxAmount, totalAmount, items]
+      required:
+        [
+          companyId,
+          customerName,
+          issueDate,
+          dueDate,
+          subtotal,
+          taxAmount,
+          totalAmount,
+          items,
+        ]
       properties:
         companyId:
           type: integer
@@ -1222,7 +1273,16 @@ components:
     # DASHBOARD
     DashboardSummary:
       type: object
-      required: [totalEmployees, totalPayslips, totalInvoices, monthlyPayroll, pendingInvoices, paidInvoices, overdueInvoices]
+      required:
+        [
+          totalEmployees,
+          totalPayslips,
+          totalInvoices,
+          monthlyPayroll,
+          pendingInvoices,
+          paidInvoices,
+          overdueInvoices,
+        ]
       properties:
         totalEmployees:
           type: integer

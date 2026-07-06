@@ -45,6 +45,8 @@ const payslipSchema = z.object({
   dueDate: z.string().optional(),
   referenceNumber: z.string().optional(),
   includeTax: z.boolean(),
+  taxName: z.string().optional(),
+  taxPercentage: z.string().optional(),
   items: z.array(itemSchema).min(1, "At least one line item is required"),
 });
 
@@ -107,6 +109,8 @@ export default function PayslipEditForm() {
       dueDate: "",
       referenceNumber: "",
       includeTax: false,
+      taxName: "GST",
+      taxPercentage: "10",
       items: [
         {
           date: "",
@@ -136,6 +140,8 @@ export default function PayslipEditForm() {
       dueDate: payslip.dueDate || "",
       referenceNumber: payslip.referenceNumber || "",
       includeTax: hasTax,
+      taxName: payslip.taxName || "GST",
+      taxPercentage: String(payslip.taxPercentage ?? (hasTax ? 10 : 0)),
       items:
         payslip.items && payslip.items.length > 0
           ? payslip.items.map((i: any) => ({
@@ -159,18 +165,22 @@ export default function PayslipEditForm() {
 
   const watchedItems = form.watch("items");
   const includeTax = form.watch("includeTax");
+  const taxName = form.watch("taxName") || "GST";
+  const taxPercentage = Math.max(0, parseNum(form.watch("taxPercentage")));
   const itemAmounts = watchedItems.map(
     (item) => parseNum(item.quantity) * parseNum(item.unitPrice),
   );
   const subtotal = itemAmounts.reduce((s, a) => s + a, 0);
-  const gstAmount = includeTax ? subtotal * 0.1 : 0;
-  const totalAmount = subtotal + gstAmount;
+  const taxAmount = includeTax ? subtotal * (taxPercentage / 100) : 0;
+  const totalAmount = subtotal + taxAmount;
 
   const today = new Date().toISOString().split("T")[0];
 
   const onSubmit = async (data: PayslipFormValues) => {
     setSaving(true);
-    const taxRate = data.includeTax ? 10 : 0;
+    const taxRate = data.includeTax
+      ? Math.max(0, parseNum(data.taxPercentage))
+      : 0;
     const items = data.items.map((item, idx) => ({
       date: item.date,
       description: item.description,
@@ -185,8 +195,10 @@ export default function PayslipEditForm() {
       issueDate: data.issueDate || null,
       dueDate: data.dueDate || null,
       referenceNumber: data.referenceNumber || null,
+      taxName: data.taxName || undefined,
+      taxPercentage: data.includeTax ? taxRate : 0,
       subtotal,
-      gstAmount,
+      gstAmount: taxAmount,
       totalAmount,
       grossSalary: subtotal,
       netSalary: totalAmount,
@@ -414,17 +426,37 @@ export default function PayslipEditForm() {
             </CardHeader>
             <CardContent className="pt-6 space-y-3 text-sm">
               {/* GST Toggle */}
-              <div className="flex items-center justify-between pb-3 border-b">
-                <div>
-                  <div className="font-medium text-sm">Include GST (10%)</div>
-                  <div className="text-xs text-muted-foreground">
-                    Australian Goods & Services Tax
+              <div className="space-y-4 pb-3 border-b">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-sm">Enable tax</div>
+                    <div className="text-xs text-muted-foreground">
+                      Toggle tax calculation on this invoice
+                    </div>
                   </div>
+                  <Switch
+                    checked={includeTax}
+                    onCheckedChange={(v) => form.setValue("includeTax", v)}
+                  />
                 </div>
-                <Switch
-                  checked={includeTax}
-                  onCheckedChange={(v) => form.setValue("includeTax", v)}
-                />
+                {includeTax && (
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="taxName">Tax name</Label>
+                      <Input id="taxName" {...form.register("taxName")} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="taxPercentage">Tax percentage</Label>
+                      <Input
+                        id="taxPercentage"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        {...form.register("taxPercentage")}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -452,8 +484,10 @@ export default function PayslipEditForm() {
               </div>
               {includeTax && (
                 <div className="flex justify-between text-muted-foreground">
-                  <span>GST (10%)</span>
-                  <span>${fmt2(gstAmount)}</span>
+                  <span>
+                    {taxName || "Tax"} ({taxPercentage}%)
+                  </span>
+                  <span>${fmt2(taxAmount)}</span>
                 </div>
               )}
               <Separator />
