@@ -68,7 +68,7 @@ export default function PayslipInvoiceView({
 
   return (
     <div
-      className="bg-white text-[13px] font-sans text-gray-900 p-10"
+      className="payroll-slip bg-white text-[13px] font-sans text-gray-900 p-10"
       style={{ minHeight: "297mm" }}
     >
       {/* Header */}
@@ -207,7 +207,7 @@ export default function PayslipInvoiceView({
                   </div>
                   {item.date && (
                     <div className="text-xs text-gray-500 mt-0.5">
-                      Dated: {formatItemDate(item.date)} hrs
+                      Dated: {formatItemDate(item.date)}
                     </div>
                   )}
                 </td>
