@@ -60,9 +60,9 @@ function SlipPreview({ slip }: { slip: PayrollSlip }) {
   const row = "grid grid-cols-[minmax(210px,1fr)_100px_100px_110px_120px] gap-2 items-center";
   const verifyUrl = slip.verificationToken ? `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, "")}/employee-pay-slips/verify/${slip.verificationToken}` : "";
   return (
-    <article className="payroll-slip bg-white text-slate-900 p-8 md:p-10 text-sm min-h-[297mm]">
-      <div className="flex justify-between items-start gap-8 mb-14">
-        <div className="pt-36 whitespace-pre-line leading-7">{slip.employeeName || "Employee name"}{"\n"}{slip.employeeAddress || "Employee address"}</div>
+    <article className="payroll-slip bg-white text-slate-900 p-6 md:p-7 text-sm min-h-[260mm]">
+      <div className="flex justify-between items-start gap-8 mb-7">
+        <div className="pt-20 whitespace-pre-line leading-6"><div>{slip.employeeName || "Employee name"}{"\n"}{slip.employeeAddress || "Employee address"}</div>{verifyUrl && <div className="flex items-center gap-3 mt-5 pt-4 border-t border-slate-200"><QRCodeSVG value={verifyUrl} size={64} /><div className="text-xs leading-5"><a href={verifyUrl} className="font-semibold text-blue-600">View online</a><br />Scan to verify this pay slip.<br />Employee ID: <b>{slip.employeeNumber || "—"}</b></div></div>}</div>
         <div className="w-[335px] rounded-md bg-slate-50 p-5 leading-7">
           <div className="font-bold text-base leading-5 mb-3">{slip.companyName || "Company name"}</div>
           <div className="flex justify-between gap-4"><span>ABN:</span><strong>{slip.companyAbn || "—"}</strong></div>
@@ -81,21 +81,20 @@ function SlipPreview({ slip }: { slip: PayrollSlip }) {
       </div>
 
       <Section title="Pay Slip Components" headers={["Hours/Units", "Rate", "This Pay", "Year To Date"]}>
-        <h3 className="font-bold text-base mt-4">Wages and Earnings</h3>
+        <h3 className="font-bold text-base mt-3">Wages and Earnings</h3>
         <div className={`${row} py-2`}><span>{slip.earningsName}</span><span className="text-right">{number(slip.hours).toFixed(2)}</span><span className="text-right">{money(slip.payRate)}</span><span className="text-right">{money(gross)}</span><span className="text-right">{money(slip.ytdEarnings)}</span></div>
         {slip.earningsNote && <p className="pl-8 text-xs pb-2"><b>Notes:</b> {slip.earningsNote}</p>}
         <Total values={[money(gross), money(slip.ytdEarnings)]} />
-        <h3 className="font-bold text-base mt-5">Taxes</h3>
+        <h3 className="font-bold text-base mt-3">Taxes</h3>
         <div className={`${row} py-2`}><span>{slip.taxName}</span><span /><span /><span className="text-right">{money(slip.payg)}</span><span className="text-right">{money(slip.ytdPayg)}</span></div>
         <Total values={[money(slip.payg), money(slip.ytdPayg)]} />
-        <h3 className="font-bold text-base mt-5">Superannuation Breakdown</h3>
+        <h3 className="font-bold text-base mt-3">Superannuation Breakdown</h3>
         <div className={`${row} py-2`}><span>{slip.superName}</span><span /><span /><span className="text-right">{money(slip.superAmount)}</span><span className="text-right">{money(slip.ytdSuper)}</span></div>
         <Total values={[money(slip.superAmount), money(slip.ytdSuper)]} />
       </Section>
 
-      <section className="mt-7"><div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 bg-slate-50 border-b px-2 py-1 font-bold text-base"><span>Bank Payments</span><span>Account</span><span className="text-right">This Pay</span></div><div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 px-2 py-3"><span>{slip.employeeName || "Employee"}<small className="block text-slate-600">{slip.paymentMethod}</small></span><span>{maskAccount(slip.bankAccount)}</span><span className="text-right">{money(net)}</span></div></section>
-      <section className="mt-6"><div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 bg-slate-50 border-b px-2 py-1 font-bold text-base"><span>Super Contributions</span><span>Member Number</span><span className="text-right">This Pay</span></div><div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 px-2 py-3"><span>{slip.superFund}<small className="block text-slate-600">{slip.superType}</small></span><span>{maskAccount(slip.superMemberNumber)}</span><span className="text-right">{money(slip.superAmount)}</span></div></section>
-      <div className="mt-auto pt-40 flex justify-between items-end text-xs text-slate-600"><div>{verifyUrl && <div className="flex items-center gap-3"><QRCodeSVG value={verifyUrl} size={66} /><div><b>Verify this payslip online</b><br />Scan this QR code or visit the verification link.</div></div>}</div><div>Employee Id: <b>{slip.employeeNumber || "—"}</b></div></div>
+      <section className="mt-5"><div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 bg-slate-50 border-b px-2 py-1 font-bold text-base"><span>Bank Payments</span><span>Account</span><span className="text-right">This Pay</span></div><div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 px-2 py-2"><span>{slip.employeeName || "Employee"}<small className="block text-slate-600">{slip.paymentMethod}</small></span><span>{maskAccount(slip.bankAccount)}</span><span className="text-right">{money(net)}</span></div></section>
+      <section className="mt-4"><div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 bg-slate-50 border-b px-2 py-1 font-bold text-base"><span>Super Contributions</span><span>Member Number</span><span className="text-right">This Pay</span></div><div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 px-2 py-2"><span>{slip.superFund}<small className="block text-slate-600">{slip.superType}</small></span><span>{maskAccount(slip.superMemberNumber)}</span><span className="text-right">{money(slip.superAmount)}</span></div></section>
     </article>
   );
 }
