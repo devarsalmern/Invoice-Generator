@@ -150,7 +150,7 @@ export default function PayslipForm() {
       referenceNumber: "",
       includeTax: false,
       showTfn: false,
-      taxName: "GST",
+      taxName: "Super Tax",
       taxPercentage: "10",
       periodStart: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split("T")[0],
       periodEnd: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split("T")[0],
@@ -172,7 +172,7 @@ export default function PayslipForm() {
       payg: "0",
       ytdPayg: "0",
       superFund: "AustralianSuper",
-      superName: "SG",
+      superName: "Superannuation Breakdown",
       superMemberNumber: "",
       superAmount: "0",
       ytdSuper: "0",
@@ -241,6 +241,14 @@ export default function PayslipForm() {
   const gross = parseNum(payRate) * parseNum(hours);
   const netPayment = Math.max(0, gross - parseNum(payg));
 
+  useEffect(() => {
+    if (includeTax) {
+      form.setValue("superAmount", fmt2(gross * (taxPercentage / 100)), {
+        shouldDirty: true,
+      });
+    }
+  }, [form, gross, includeTax, taxPercentage]);
+
   const onSubmit = (data: PayslipFormValues) => {
     const taxRate = data.includeTax
       ? Math.max(0, parseNum(data.taxPercentage))
@@ -284,7 +292,7 @@ export default function PayslipForm() {
       payg: data.payg || "0",
       ytdPayg: data.ytdPayg || "0",
       superFund: data.superFund || "AustralianSuper",
-      superName: data.superName || "SG",
+      superName: data.superName || "Superannuation Breakdown",
       superMemberNumber: data.superMemberNumber || "",
       superAmount: data.superAmount || "0",
       ytdSuper: data.ytdSuper || "0",
@@ -327,7 +335,7 @@ export default function PayslipForm() {
                 payg: data.payg || "0",
                 ytdPayg: data.ytdPayg || "0",
                 superFund: data.superFund || "AustralianSuper",
-                superName: data.superName || "SG",
+                superName: data.superName || "Superannuation Breakdown",
                 superType: data.superType || "Super Guarantee",
                 superMemberNumber: data.superMemberNumber || "",
                 superAmount: data.superAmount || "0",
@@ -442,7 +450,7 @@ export default function PayslipForm() {
                 </div>
                 <div className="space-y-2">
                   <Label>Super this pay</Label>
-                  <Input type="number" {...form.register("superAmount")} />
+                  <Input type="number" step="0.01" {...form.register("superAmount")} />
                 </div>
                 <div className="space-y-2">
                   <Label>YTD super</Label>

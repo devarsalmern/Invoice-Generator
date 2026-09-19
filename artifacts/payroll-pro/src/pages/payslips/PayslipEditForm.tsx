@@ -112,9 +112,9 @@ export default function PayslipEditForm() {
       referenceNumber: "",
       includeTax: false,
       showTfn: false,
-      taxName: "GST",
+      taxName: "Super Tax",
       taxPercentage: "10",
-      periodStart: "", periodEnd: "", datePaid: "", payRate: "0", hours: "0", earningsName: "Permanent Ordinary Hours", earningsNote: "", ytdEarnings: "0", payg: "0", ytdPayg: "0", superFund: "AustralianSuper", superName: "SG", superType: "Super Guarantee", superMemberNumber: "", superAmount: "0", ytdSuper: "0", paymentMethod: "Manual deposit", bankAccount: "",
+      periodStart: "", periodEnd: "", datePaid: "", payRate: "0", hours: "0", earningsName: "Permanent Ordinary Hours", earningsNote: "", ytdEarnings: "0", payg: "0", ytdPayg: "0", superFund: "AustralianSuper", superName: "Superannuation Breakdown", superType: "Super Guarantee", superMemberNumber: "", superAmount: "0", ytdSuper: "0", paymentMethod: "Manual deposit", bankAccount: "",
       items: [
         {
           date: "",
@@ -143,12 +143,12 @@ export default function PayslipEditForm() {
       referenceNumber: payslip.referenceNumber || "",
       includeTax: hasTax,
       showTfn: Boolean((payslip as any).showTfn),
-      taxName: payslip.taxName || "GST",
+      taxName: payslip.taxName || "Super Tax",
       taxPercentage: String(payslip.taxPercentage ?? (hasTax ? 10 : 0)),
       periodStart: (payslip as any).periodStart || "",
       periodEnd: (payslip as any).periodEnd || "",
       datePaid: (payslip as any).datePaid || "",
-      payRate: String((payslip as any).payRate ?? 0), hours: String((payslip as any).hours ?? 0), earningsName: (payslip as any).earningsName || "Permanent Ordinary Hours", earningsNote: (payslip as any).earningsNote || "", ytdEarnings: String((payslip as any).ytdEarnings ?? 0), payg: String((payslip as any).payg ?? 0), ytdPayg: String((payslip as any).ytdPayg ?? 0), superFund: (payslip as any).superFund || "AustralianSuper", superName: (payslip as any).superName || "SG", superType: (payslip as any).superType || "Super Guarantee", superMemberNumber: (payslip as any).superMemberNumber || "", superAmount: String((payslip as any).superAmount ?? 0), ytdSuper: String((payslip as any).ytdSuper ?? 0), paymentMethod: (payslip as any).paymentMethod || "Manual deposit", bankAccount: (payslip as any).bankAccount || (payslip.employee as any)?.bankAccount || "",
+      payRate: String((payslip as any).payRate ?? 0), hours: String((payslip as any).hours ?? 0), earningsName: (payslip as any).earningsName || "Permanent Ordinary Hours", earningsNote: (payslip as any).earningsNote || "", ytdEarnings: String((payslip as any).ytdEarnings ?? 0), payg: String((payslip as any).payg ?? 0), ytdPayg: String((payslip as any).ytdPayg ?? 0), superFund: (payslip as any).superFund || "AustralianSuper", superName: (payslip as any).superName === "SG" ? "Superannuation Breakdown" : ((payslip as any).superName || "Superannuation Breakdown"), superType: (payslip as any).superType || "Super Guarantee", superMemberNumber: (payslip as any).superMemberNumber || "", superAmount: String((payslip as any).superAmount ?? 0), ytdSuper: String((payslip as any).ytdSuper ?? 0), paymentMethod: (payslip as any).paymentMethod || "Manual deposit", bankAccount: (payslip as any).bankAccount || (payslip.employee as any)?.bankAccount || "",
       items:
         payslip.items && payslip.items.length > 0
           ? payslip.items.map((i: any) => ({
@@ -183,6 +183,14 @@ export default function PayslipEditForm() {
   const totalAmount = Math.max(0, subtotal - taxAmount);
   const gross = parseNum(form.watch("payRate")) * parseNum(form.watch("hours"));
   const netPayment = Math.max(0, gross - parseNum(form.watch("payg")));
+
+  useEffect(() => {
+    if (includeTax) {
+      form.setValue("superAmount", fmt2(gross * (taxPercentage / 100)), {
+        shouldDirty: true,
+      });
+    }
+  }, [form, gross, includeTax, taxPercentage]);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -349,7 +357,7 @@ export default function PayslipEditForm() {
                 <div className="space-y-2"><Label>Super label</Label><Input {...form.register("superName")} /></div>
                 <div className="space-y-2"><Label>Member number</Label><Input {...form.register("superMemberNumber")} /></div>
                 <div className="space-y-2"><Label>Contribution type</Label><Input {...form.register("superType")} /></div>
-                <div className="space-y-2"><Label>Super this pay</Label><Input type="number" {...form.register("superAmount")} /></div>
+                <div className="space-y-2"><Label>Super this pay</Label><Input type="number" step="0.01" {...form.register("superAmount")} /></div>
                 <div className="space-y-2"><Label>YTD super</Label><Input type="number" {...form.register("ytdSuper")} /></div>
                 <div className="space-y-2"><Label>Payment method</Label><Input {...form.register("paymentMethod")} /></div>
                 <div className="space-y-2"><Label>Account number</Label><Input {...form.register("bankAccount")} /></div>

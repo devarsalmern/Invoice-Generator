@@ -154,7 +154,7 @@ export default function PayslipInvoiceView({
         <PayrollRow label={payslip.earningsName || "Permanent Ordinary Hours"} hours={hours} rate={payRate} current={gross} ytd={toNumber(payslip.ytdEarnings)} />
         {payslip.earningsNote && <p className="px-3 py-2 text-xs text-gray-600">Notes: {payslip.earningsNote}</p>}
         <PayrollRow label={payslip.taxName || "PAYG"} current={payg} ytd={toNumber(payslip.ytdPayg)} />
-        <PayrollRow label={payslip.superName || "SG"} current={toNumber(payslip.superAmount)} ytd={toNumber(payslip.ytdSuper)} />
+        <PayrollRow label={payslip.superName === "SG" ? "Superannuation Breakdown" : (payslip.superName || "Superannuation Breakdown")} current={toNumber(payslip.superAmount)} ytd={toNumber(payslip.ytdSuper)} />
       </section>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 text-sm">
