@@ -54,6 +54,9 @@ const payslipSchema = z.object({
   showTfn: z.boolean(),
   taxName: z.string().optional(),
   taxPercentage: z.string().optional(),
+  periodStart: z.string().optional(),
+  periodEnd: z.string().optional(),
+  datePaid: z.string().optional(),
   // payroll-style fields
   payRate: z.string().optional(),
   hours: z.string().optional(),
@@ -153,6 +156,9 @@ export default function PayslipForm() {
       showTfn: false,
       taxName: "GST",
       taxPercentage: "10",
+      periodStart: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split("T")[0],
+      periodEnd: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split("T")[0],
+      datePaid: today,
       items: [
         {
           date: today,
@@ -265,6 +271,14 @@ export default function PayslipForm() {
       subtotal,
       gstAmount: taxAmount,
       totalAmount,
+      companyName: companies?.find((c) => c.id === parseInt(data.companyId, 10))?.name || "",
+      companyAbn: (companies?.find((c) => c.id === parseInt(data.companyId, 10)) as any)?.taxNumber || "",
+      employeeName: (() => { const employee = employees?.find((e) => e.id === parseInt(data.employeeId, 10)); return employee ? `${employee.firstName} ${employee.lastName}` : ""; })(),
+      employeeNumber: (employees?.find((e) => e.id === parseInt(data.employeeId, 10)) as any)?.employeeNumber || "",
+      employeeAddress: (employees?.find((e) => e.id === parseInt(data.employeeId, 10)) as any)?.address || "",
+      periodStart: data.periodStart || new Date(parseInt(data.year, 10), parseInt(data.month, 10) - 1, 1).toISOString().split("T")[0],
+      periodEnd: data.periodEnd || new Date(parseInt(data.year, 10), parseInt(data.month, 10), 0).toISOString().split("T")[0],
+      datePaid: data.datePaid || data.issueDate || today,
       // payroll-aware fields
       grossSalary: gross || subtotal,
       netSalary: netPayment || totalAmount,
@@ -292,13 +306,13 @@ export default function PayslipForm() {
             queryClient.invalidateQueries({
               queryKey: getListPayslipsQueryKey(),
             });
-            toast({ title: "Invoice created successfully" });
+            toast({ title: "Payslip created successfully" });
             // also create employee pay slip record for QR history
             try {
               const company = companies?.find((c) => c.id === parseInt(data.companyId, 10));
               const emp = employees?.find((e) => e.id === parseInt(data.employeeId, 10));
-              const periodStart = new Date(parseInt(data.year, 10), parseInt(data.month, 10) - 1, 1).toISOString().split("T")[0];
-              const periodEnd = new Date(parseInt(data.year, 10), parseInt(data.month, 10), 0).toISOString().split("T")[0];
+              const periodStart = data.periodStart || new Date(parseInt(data.year, 10), parseInt(data.month, 10) - 1, 1).toISOString().split("T")[0];
+              const periodEnd = data.periodEnd || new Date(parseInt(data.year, 10), parseInt(data.month, 10), 0).toISOString().split("T")[0];
               const empSlip = {
                 companyId: data.companyId,
                 employeeId: data.employeeId,
@@ -309,7 +323,7 @@ export default function PayslipForm() {
                 employeeAddress: (emp as any)?.address || "",
                 periodStart,
                 periodEnd,
-                datePaid: data.issueDate || new Date().toISOString().split("T")[0],
+                datePaid: data.datePaid || data.issueDate || new Date().toISOString().split("T")[0],
                 payRate: data.payRate || "0",
                 hours: data.hours || String(watchedItems.reduce((s, it) => s + parseNum(it.quantity), 0)),
                 earningsName: data.earningsName || (data.items[0]?.description || "Earnings"),
@@ -369,9 +383,6 @@ export default function PayslipForm() {
         className="grid grid-cols-1 lg:grid-cols-3 gap-6"
       >
         <div className="lg:col-span-2 space-y-6">
-          {/* Invoice Details */}
-          <Card>
-
           {/* Earnings (payroll-style) */}
           <Card>
             <CardHeader>
@@ -470,7 +481,10 @@ export default function PayslipForm() {
             </CardContent>
           </Card>
 
-        </div>
+          {/* Invoice Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Invoice Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -567,6 +581,18 @@ export default function PayslipForm() {
                 <div className="space-y-2">
                   <Label>Due Date</Label>
                   <Input type="date" {...form.register("dueDate")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Period start</Label>
+                  <Input type="date" {...form.register("periodStart")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Period end</Label>
+                  <Input type="date" {...form.register("periodEnd")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date paid</Label>
+                  <Input type="date" {...form.register("datePaid")} />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label>Reference (e.g. Painting Work)</Label>

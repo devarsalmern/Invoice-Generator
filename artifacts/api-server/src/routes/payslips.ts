@@ -59,6 +59,29 @@ const fmt = (p: any, employee?: any, items?: any[]) => ({
   issueDate: p.issueDate,
   dueDate: p.dueDate,
   referenceNumber: p.referenceNumber,
+  companyName: p.companyName,
+  companyAbn: p.companyAbn,
+  employeeName: p.employeeName,
+  employeeNumber: p.employeeNumber,
+  employeeAddress: p.employeeAddress,
+  periodStart: p.periodStart,
+  periodEnd: p.periodEnd,
+  datePaid: p.datePaid,
+  payRate: parseFloat(p.payRate || "0"),
+  hours: parseFloat(p.hours || "0"),
+  earningsName: p.earningsName,
+  earningsNote: p.earningsNote,
+  ytdEarnings: parseFloat(p.ytdEarnings || "0"),
+  payg: parseFloat(p.payg || "0"),
+  ytdPayg: parseFloat(p.ytdPayg || "0"),
+  superFund: p.superFund,
+  superName: p.superName,
+  superType: p.superType,
+  superMemberNumber: p.superMemberNumber,
+  superAmount: parseFloat(p.superAmount || "0"),
+  ytdSuper: parseFloat(p.ytdSuper || "0"),
+  paymentMethod: p.paymentMethod,
+  bankAccount: p.bankAccount,
   status: p.status,
   basicSalary: parseFloat(p.basicSalary || "0"),
   housingAllowance: parseFloat(p.housingAllowance || "0"),
@@ -130,6 +153,11 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
       issueDate,
       dueDate,
       referenceNumber,
+      companyName, companyAbn, employeeName, employeeNumber, employeeAddress,
+      periodStart, periodEnd, datePaid, payRate, hours, earningsName,
+      earningsNote, ytdEarnings, payg, ytdPayg, superFund, superName,
+      superType, superMemberNumber, superAmount, ytdSuper, paymentMethod,
+      bankAccount,
       taxName,
       taxPercentage,
       showTfn,
@@ -166,6 +194,20 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
         issueDate: issueDate || null,
         dueDate: dueDate || null,
         referenceNumber: referenceNumber || null,
+        companyName: companyName || null,
+        companyAbn: companyAbn || null,
+        employeeName: employeeName || null,
+        employeeNumber: employeeNumber || null,
+        employeeAddress: employeeAddress || null,
+        periodStart: periodStart || null,
+        periodEnd: periodEnd || null,
+        datePaid: datePaid || null,
+        payRate: String(payRate || 0), hours: String(hours || 0),
+        earningsName: earningsName || null, earningsNote: earningsNote || null,
+        ytdEarnings: String(ytdEarnings || 0), payg: String(payg || 0), ytdPayg: String(ytdPayg || 0),
+        superFund: superFund || null, superName: superName || null, superType: superType || null,
+        superMemberNumber: superMemberNumber || null, superAmount: String(superAmount || 0),
+        ytdSuper: String(ytdSuper || 0), paymentMethod: paymentMethod || null, bankAccount: bankAccount || null,
         basicSalary: String(basicSalary || 0),
         housingAllowance: String(housingAllowance || 0),
         transportAllowance: String(transportAllowance || 0),
@@ -277,6 +319,11 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
       issueDate,
       dueDate,
       referenceNumber,
+      companyName, companyAbn, employeeName, employeeNumber, employeeAddress,
+      periodStart, periodEnd, datePaid, payRate, hours, earningsName,
+      earningsNote, ytdEarnings, payg, ytdPayg, superFund, superName,
+      superType, superMemberNumber, superAmount, ytdSuper, paymentMethod,
+      bankAccount,
       status,
       month,
       year,
@@ -310,6 +357,12 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
     if (dueDate !== undefined) updates.dueDate = dueDate;
     if (referenceNumber !== undefined)
       updates.referenceNumber = referenceNumber;
+    for (const key of ["companyName", "companyAbn", "employeeName", "employeeNumber", "employeeAddress", "periodStart", "periodEnd", "datePaid", "earningsName", "earningsNote", "superFund", "superName", "superType", "superMemberNumber", "paymentMethod", "bankAccount"] as const) {
+      if (req.body[key] !== undefined) updates[key] = req.body[key] || null;
+    }
+    for (const key of ["payRate", "hours", "ytdEarnings", "payg", "ytdPayg", "superAmount", "ytdSuper"] as const) {
+      if (req.body[key] !== undefined) updates[key] = String(req.body[key] || 0);
+    }
     if (status !== undefined) updates.status = status;
 
     const [payslip] = await db

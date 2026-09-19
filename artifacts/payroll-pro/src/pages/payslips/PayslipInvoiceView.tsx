@@ -13,6 +13,10 @@ const toNumber = (value: unknown) => {
 };
 const fmt = (n: unknown) => toNumber(n).toFixed(2);
 const fmtAud = (n: unknown) => `$${fmt(n)}`;
+const maskAccount = (value: unknown) => {
+  const text = String(value || "");
+  return text.length > 4 ? `••••${text.slice(-4)}` : text || "—";
+};
 
 const formatDisplayDate = (dateStr: string | undefined | null): string => {
   if (!dateStr) return "—";
@@ -51,6 +55,13 @@ export default function PayslipInvoiceView({
   const hasTax = items.some((i: any) => parseFloat(i.taxRate ?? 0) > 0);
 
   const payslipNumber = `PAY-${String(payslip.id).padStart(4, "0")}`;
+  const payRate = toNumber(payslip.payRate);
+  const hours = toNumber(payslip.hours);
+  const gross = payRate * hours || toNumber(payslip.grossSalary) || subtotal;
+  const payg = toNumber(payslip.payg);
+  const net = Math.max(0, gross - payg) || toNumber(payslip.netSalary) || totalAmount;
+  const employeeName = payslip.employeeName || (emp ? `${emp.firstName} ${emp.lastName}` : "Employee");
+  const employeeAddress = payslip.employeeAddress || emp?.address;
   const verifyUrl = payslip.verificationToken
     ? `${window.location.origin}/verify/${payslip.verificationToken}`
     : null;
@@ -64,13 +75,13 @@ export default function PayslipInvoiceView({
       <div className="flex justify-between items-start mb-6">
         {/* Left: Company info */}
         <div>
-          <div className="text-2xl font-bold mb-3">Tax Invoice</div>
+          <div className="text-2xl font-bold mb-3">Employee Pay Slip</div>
           <div className="font-semibold text-sm">
-            {company?.name || "Company"}
+            {payslip.companyName || company?.name || "Company"}
           </div>
-          {company?.taxNumber && (
+          {(payslip.companyAbn || company?.taxNumber) && (
             <div className="text-gray-600 text-xs">
-              ABN: {company.taxNumber}
+              ABN: {payslip.companyAbn || company.taxNumber}
             </div>
           )}
           {company?.email && (
@@ -82,14 +93,14 @@ export default function PayslipInvoiceView({
         </div>
 
         {/* Right: Employee info */}
-        {emp && (
+        {(emp || payslip.employeeName) && (
           <div className="text-right">
             <div className="font-semibold text-sm">
-              {emp.firstName} {emp.lastName}
+              {employeeName}
             </div>
-            {(emp as any).address && (
+            {employeeAddress && (
               <div className="text-gray-600 text-xs whitespace-pre-line">
-                {(emp as any).address}
+              {employeeAddress}
               </div>
             )}
             {(emp as any).abn && (
@@ -104,6 +115,12 @@ export default function PayslipInvoiceView({
             )}
           </div>
         )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mb-6 border-y border-gray-200 py-3 text-xs">
+        <div><span className="text-gray-500 block">Period starting</span><b>{formatDisplayDate(payslip.periodStart)}</b></div>
+        <div><span className="text-gray-500 block">Pay period ending</span><b>{formatDisplayDate(payslip.periodEnd)}</b></div>
+        <div><span className="text-gray-500 block">Date paid</span><b>{formatDisplayDate(payslip.datePaid || payslip.issueDate)}</b></div>
       </div>
 
       {/* Amount summary row */}
@@ -145,6 +162,21 @@ export default function PayslipInvoiceView({
           </div>
         )}
       </div>
+
+      <section className="mb-6">
+        <div className="grid grid-cols-[minmax(150px,1fr)_80px_80px_100px_100px] gap-2 bg-gray-900 text-white px-3 py-2 text-xs font-bold">
+          <span>Pay Slip Components</span><span className="text-right">Hours</span><span className="text-right">Rate</span><span className="text-right">This pay</span><span className="text-right">YTD</span>
+        </div>
+        <PayrollRow label={payslip.earningsName || "Permanent Ordinary Hours"} hours={hours} rate={payRate} current={gross} ytd={toNumber(payslip.ytdEarnings)} />
+        {payslip.earningsNote && <p className="px-3 py-2 text-xs text-gray-600">Notes: {payslip.earningsNote}</p>}
+        <PayrollRow label={payslip.taxName || "PAYG"} current={payg} ytd={toNumber(payslip.ytdPayg)} />
+        <PayrollRow label={payslip.superName || "SG"} current={toNumber(payslip.superAmount)} ytd={toNumber(payslip.ytdSuper)} />
+      </section>
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 text-sm">
+        <div className="border p-3"><b>Bank payment</b><p className="mt-1">{payslip.paymentMethod || "Manual deposit"}</p><p className="text-gray-600">Account: {maskAccount(payslip.bankAccount || emp?.bankAccount)}</p><p className="font-semibold mt-2">Net payment: {fmtAud(net)}</p></div>
+        <div className="border p-3"><b>Super contribution</b><p className="mt-1">{payslip.superFund || "AustralianSuper"}</p><p className="text-gray-600">{payslip.superType || "Super Guarantee"} · {maskAccount(payslip.superMemberNumber)}</p><p className="font-semibold mt-2">This pay: {fmtAud(payslip.superAmount)}</p></div>
+      </section>
 
       {/* View online link */}
       {verifyUrl && (
@@ -289,4 +321,8 @@ export default function PayslipInvoiceView({
       </div>
     </div>
   );
+}
+
+function PayrollRow({ label, hours, rate, current, ytd }: { label: string; hours?: number; rate?: number; current: number; ytd: number }) {
+  return <div className="grid grid-cols-[minmax(150px,1fr)_80px_80px_100px_100px] gap-2 border-b px-3 py-2 text-sm"><span>{label}</span><span className="text-right">{hours ? fmt(hours) : ""}</span><span className="text-right">{rate ? fmtAud(rate) : ""}</span><span className="text-right">{fmtAud(current)}</span><span className="text-right">{fmtAud(ytd)}</span></div>;
 }
