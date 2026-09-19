@@ -145,7 +145,7 @@ export default function EmployeeDetail() {
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogTitle>Are you absolutely sure.?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This will permanently delete{" "}
                   <strong>
