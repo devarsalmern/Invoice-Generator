@@ -3,7 +3,9 @@ const apiBase = rawApiUrl ? rawApiUrl.replace(/\/+$/, "").replace(/^(?!https?:\/
 
 export async function payrollSlipFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("payrollpro_token");
-  const response = await fetch(`${apiBase}${path}`, {
+  // The standard generated client already includes /api in each endpoint path.
+  // Keep this separate helper consistent while VITE_API_URL remains the API origin.
+  const response = await fetch(`${apiBase}/api${path}`, {
     ...init,
     headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}), ...init.headers },
   });
