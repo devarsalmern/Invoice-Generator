@@ -42,7 +42,7 @@ export default function PayslipList() {
     ...(status !== "all" ? { status } : {}),
   };
 
-  const { data: payslips, isLoading } = useListPayslips(queryParams, {
+  const { data: payslips, isLoading, isError, error } = useListPayslips(queryParams, {
     query: { queryKey: getListPayslipsQueryKey(queryParams) },
   });
 
@@ -163,6 +163,20 @@ export default function PayslipList() {
                       </TableCell>
                     </TableRow>
                   ))
+                ) : isError ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-32 text-center">
+                      <div className="flex flex-col items-center justify-center text-destructive">
+                        <FileText className="h-8 w-8 mb-2 opacity-50" />
+                        <p className="font-medium">Could not load payslips</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {error instanceof Error
+                            ? error.message
+                            : "Apply the payroll fields database migration and try again."}
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ) : payslips?.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="h-32 text-center">
