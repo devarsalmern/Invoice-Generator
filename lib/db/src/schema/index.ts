@@ -4,3 +4,4 @@ export * from "./employees";
 export * from "./payslips";
 export * from "./invoices";
 export * from "./audit-logs";
+export * from "./employee-pay-slips";

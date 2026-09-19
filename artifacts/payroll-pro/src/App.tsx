@@ -25,6 +25,7 @@ import PayslipDetail from "@/pages/payslips/PayslipDetail";
 import PayslipPrint from "@/pages/payslips/PayslipPrint";
 import PayslipEditForm from "@/pages/payslips/PayslipEditForm";
 import PayrollSlipManager from "@/pages/payroll-slips/PayrollSlipManager";
+import VerifyEmployeePaySlip from "@/pages/payroll-slips/VerifyEmployeePaySlip";
 
 import InvoiceList from "@/pages/invoices/InvoiceList";
 import InvoiceForm from "@/pages/invoices/InvoiceForm";
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/verify/:token" component={VerifyDocument} />
+      <Route path="/employee-pay-slips/verify/:token" component={VerifyEmployeePaySlip} />
 
       {/* Print route — no AppLayout, must be before /payslips/:id */}
       <Route path="/payslips/:id/print">
