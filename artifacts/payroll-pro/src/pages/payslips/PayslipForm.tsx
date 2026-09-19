@@ -47,8 +47,6 @@ const payslipSchema = z.object({
   employeeId: z.string().min(1, "Employee is required"),
   month: z.string().min(1),
   year: z.string().min(1),
-  issueDate: z.string().optional(),
-  dueDate: z.string().optional(),
   referenceNumber: z.string().optional(),
   includeTax: z.boolean(),
   showTfn: z.boolean(),
@@ -149,8 +147,6 @@ export default function PayslipForm() {
       employeeId: "",
       month: String(currentDate.getMonth() + 1),
       year: String(currentDate.getFullYear()),
-      issueDate: today,
-      dueDate: "",
       referenceNumber: "",
       includeTax: false,
       showTfn: false,
@@ -262,8 +258,6 @@ export default function PayslipForm() {
       employeeId: parseInt(data.employeeId, 10),
       month: parseInt(data.month, 10),
       year: parseInt(data.year, 10),
-      issueDate: data.issueDate || undefined,
-      dueDate: data.dueDate || undefined,
       referenceNumber: data.referenceNumber || undefined,
       showTfn: data.showTfn,
       taxName: data.taxName || undefined,
@@ -278,7 +272,7 @@ export default function PayslipForm() {
       employeeAddress: (employees?.find((e) => e.id === parseInt(data.employeeId, 10)) as any)?.address || "",
       periodStart: data.periodStart || new Date(parseInt(data.year, 10), parseInt(data.month, 10) - 1, 1).toISOString().split("T")[0],
       periodEnd: data.periodEnd || new Date(parseInt(data.year, 10), parseInt(data.month, 10), 0).toISOString().split("T")[0],
-      datePaid: data.datePaid || data.issueDate || today,
+      datePaid: data.datePaid || today,
       // payroll-aware fields
       grossSalary: gross || subtotal,
       netSalary: netPayment || totalAmount,
@@ -323,7 +317,7 @@ export default function PayslipForm() {
                 employeeAddress: (emp as any)?.address || "",
                 periodStart,
                 periodEnd,
-                datePaid: data.datePaid || data.issueDate || new Date().toISOString().split("T")[0],
+                datePaid: data.datePaid || new Date().toISOString().split("T")[0],
                 payRate: data.payRate || "0",
                 hours: data.hours || String(watchedItems.reduce((s, it) => s + parseNum(it.quantity), 0)),
                 earningsName: data.earningsName || (data.items[0]?.description || "Earnings"),
@@ -573,14 +567,6 @@ export default function PayslipForm() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Issue Date</Label>
-                  <Input type="date" {...form.register("issueDate")} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Due Date</Label>
-                  <Input type="date" {...form.register("dueDate")} />
                 </div>
                 <div className="space-y-2">
                   <Label>Period start</Label>

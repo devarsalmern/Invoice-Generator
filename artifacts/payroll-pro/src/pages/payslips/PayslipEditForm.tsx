@@ -41,8 +41,6 @@ const itemSchema = z.object({
 const payslipSchema = z.object({
   month: z.string().min(1),
   year: z.string().min(1),
-  issueDate: z.string().optional(),
-  dueDate: z.string().optional(),
   referenceNumber: z.string().optional(),
   includeTax: z.boolean(),
   showTfn: z.boolean(),
@@ -111,8 +109,6 @@ export default function PayslipEditForm() {
     defaultValues: {
       month: String(currentDate.getMonth() + 1),
       year: String(currentDate.getFullYear()),
-      issueDate: "",
-      dueDate: "",
       referenceNumber: "",
       includeTax: false,
       showTfn: false,
@@ -144,8 +140,6 @@ export default function PayslipEditForm() {
     form.reset({
       month: String(payslip.month),
       year: String(payslip.year),
-      issueDate: payslip.issueDate || "",
-      dueDate: payslip.dueDate || "",
       referenceNumber: payslip.referenceNumber || "",
       includeTax: hasTax,
       showTfn: Boolean((payslip as any).showTfn),
@@ -153,7 +147,7 @@ export default function PayslipEditForm() {
       taxPercentage: String(payslip.taxPercentage ?? (hasTax ? 10 : 0)),
       periodStart: (payslip as any).periodStart || "",
       periodEnd: (payslip as any).periodEnd || "",
-      datePaid: (payslip as any).datePaid || payslip.issueDate || "",
+      datePaid: (payslip as any).datePaid || "",
       payRate: String((payslip as any).payRate ?? 0), hours: String((payslip as any).hours ?? 0), earningsName: (payslip as any).earningsName || "Permanent Ordinary Hours", earningsNote: (payslip as any).earningsNote || "", ytdEarnings: String((payslip as any).ytdEarnings ?? 0), payg: String((payslip as any).payg ?? 0), ytdPayg: String((payslip as any).ytdPayg ?? 0), superFund: (payslip as any).superFund || "AustralianSuper", superName: (payslip as any).superName || "SG", superType: (payslip as any).superType || "Super Guarantee", superMemberNumber: (payslip as any).superMemberNumber || "", superAmount: String((payslip as any).superAmount ?? 0), ytdSuper: String((payslip as any).ytdSuper ?? 0), paymentMethod: (payslip as any).paymentMethod || "Manual deposit", bankAccount: (payslip as any).bankAccount || (payslip.employee as any)?.bankAccount || "",
       items:
         payslip.items && payslip.items.length > 0
@@ -208,8 +202,6 @@ export default function PayslipEditForm() {
     const payload = {
       month: parseInt(data.month, 10),
       year: parseInt(data.year, 10),
-      issueDate: data.issueDate || null,
-      dueDate: data.dueDate || null,
       referenceNumber: data.referenceNumber || null,
       showTfn: data.showTfn,
       taxName: data.taxName || undefined,
@@ -219,7 +211,7 @@ export default function PayslipEditForm() {
       totalAmount,
       grossSalary: gross || subtotal,
       netSalary: netPayment || totalAmount,
-      periodStart: data.periodStart || null, periodEnd: data.periodEnd || null, datePaid: data.datePaid || data.issueDate || null,
+      periodStart: data.periodStart || null, periodEnd: data.periodEnd || null, datePaid: data.datePaid || null,
       payRate: data.payRate || "0", hours: data.hours || "0", earningsName: data.earningsName || "Earnings", earningsNote: data.earningsNote || "", ytdEarnings: data.ytdEarnings || "0", payg: data.payg || "0", ytdPayg: data.ytdPayg || "0", superFund: data.superFund || "", superName: data.superName || "", superType: data.superType || "", superMemberNumber: data.superMemberNumber || "", superAmount: data.superAmount || "0", ytdSuper: data.ytdSuper || "0", paymentMethod: data.paymentMethod || "", bankAccount: data.bankAccount || "",
       items,
     };
@@ -322,14 +314,6 @@ export default function PayslipEditForm() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Issue Date</Label>
-                  <Input type="date" {...form.register("issueDate")} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Due Date</Label>
-                  <Input type="date" {...form.register("dueDate")} />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label>Reference</Label>

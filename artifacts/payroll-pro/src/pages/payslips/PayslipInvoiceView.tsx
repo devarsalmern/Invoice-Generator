@@ -120,7 +120,7 @@ export default function PayslipInvoiceView({
       <div className="grid grid-cols-3 gap-3 mb-6 border-y border-gray-200 py-3 text-xs">
         <div><span className="text-gray-500 block">Period starting</span><b>{formatDisplayDate(payslip.periodStart)}</b></div>
         <div><span className="text-gray-500 block">Pay period ending</span><b>{formatDisplayDate(payslip.periodEnd)}</b></div>
-        <div><span className="text-gray-500 block">Date paid</span><b>{formatDisplayDate(payslip.datePaid || payslip.issueDate)}</b></div>
+        <div><span className="text-gray-500 block">Date paid</span><b>{formatDisplayDate(payslip.datePaid)}</b></div>
       </div>
 
       {/* Amount summary row */}
@@ -130,22 +130,6 @@ export default function PayslipInvoiceView({
             Amount due
           </div>
           <div className="text-2xl font-bold mt-0.5">{fmtAud(totalAmount)}</div>
-        </div>
-        <div>
-          <div className="text-xs text-gray-500 uppercase tracking-wide">
-            Due date
-          </div>
-          <div className="text-base font-bold mt-0.5">
-            {formatDisplayDate(payslip.dueDate)}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs text-gray-500 uppercase tracking-wide">
-            Issue date
-          </div>
-          <div className="text-sm mt-0.5">
-            {formatDisplayDate(payslip.issueDate)}
-          </div>
         </div>
         <div>
           <div className="text-xs text-gray-500 uppercase tracking-wide">
