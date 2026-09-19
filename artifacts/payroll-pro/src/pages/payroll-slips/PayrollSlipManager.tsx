@@ -1,13 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
-import { getListEmployeesQueryKey, useListCompanies, useListEmployees } from "@workspace/api-client-react";
+import {
+  getListEmployeesQueryKey,
+  useListCompanies,
+  useListEmployees,
+} from "@workspace/api-client-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Building2, FilePlus2, Plus, Printer, QrCode, Save, Trash2, User, WalletCards } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  FilePlus2,
+  Plus,
+  Printer,
+  QrCode,
+  Save,
+  Trash2,
+  User,
+  WalletCards,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { payrollSlipFetch } from "./api";
 
@@ -43,56 +70,270 @@ type PayrollSlip = {
 };
 
 const money = (value: string | number) =>
-  new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(Number(value) || 0);
+  new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(
+    Number(value) || 0,
+  );
 const number = (value: string) => Number(value) || 0;
 const date = () => new Date().toISOString().slice(0, 10);
 const blank = (): PayrollSlip => ({
-  id: null, companyId: "", employeeId: "", companyName: "", companyAbn: "", employeeName: "",
-  employeeNumber: "", employeeAddress: "", periodStart: date(), periodEnd: date(), datePaid: date(), payRate: "0",
-  hours: "0", earningsName: "Permanent Ordinary Hours", earningsNote: "", ytdEarnings: "0", taxName: "PAYG", payg: "0", ytdPayg: "0",
-  superFund: "AustralianSuper", superName: "SG", superType: "Super Guarantee", superMemberNumber: "", superAmount: "0", ytdSuper: "0",
-  paymentMethod: "Manual deposit", bankAccount: "",
+  id: null,
+  companyId: "",
+  employeeId: "",
+  companyName: "",
+  companyAbn: "",
+  employeeName: "",
+  employeeNumber: "",
+  employeeAddress: "",
+  periodStart: date(),
+  periodEnd: date(),
+  datePaid: date(),
+  payRate: "0",
+  hours: "0",
+  earningsName: "Permanent Ordinary Hours",
+  earningsNote: "",
+  ytdEarnings: "0",
+  taxName: "PAYG",
+  payg: "0",
+  ytdPayg: "0",
+  superFund: "AustralianSuper",
+  superName: "SG",
+  superType: "Super Guarantee",
+  superMemberNumber: "",
+  superAmount: "0",
+  ytdSuper: "0",
+  paymentMethod: "Manual deposit",
+  bankAccount: "",
 });
 
 function SlipPreview({ slip }: { slip: PayrollSlip }) {
   const gross = number(slip.payRate) * number(slip.hours);
   const net = gross - number(slip.payg);
-  const row = "grid grid-cols-[minmax(190px,1fr)_88px_88px_105px_115px] gap-2 items-center";
-  const verifyUrl = slip.verificationToken ? `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, "")}/employee-pay-slips/verify/${slip.verificationToken}` : "";
+  const row =
+    "grid grid-cols-[minmax(190px,1fr)_88px_88px_105px_115px] gap-2 items-center";
+  const verifyUrl = slip.verificationToken
+    ? `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, "")}/employee-pay-slips/verify/${slip.verificationToken}`
+    : "";
   return (
     <article className="payroll-slip bg-white text-slate-900 p-6 md:p-7 text-sm">
-      <div className="border-b-2 border-slate-900 pb-4 mb-5 flex items-end justify-between"><div><p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-semibold">Payroll statement</p><h2 className="text-2xl font-bold tracking-tight mt-1">Employee Pay Slip</h2></div><div className="text-right text-xs text-slate-500"><p>Pay period ending</p><p className="font-bold text-slate-900 text-sm">{formatDate(slip.periodEnd)}</p></div></div>
+      <div className="border-b-2 border-slate-900 pb-4 mb-5 flex items-end justify-between">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-semibold">
+            Payroll statement
+          </p>
+          <h2 className="text-2xl font-bold tracking-tight mt-1">
+            Employee Pay Slip
+          </h2>
+        </div>
+        <div className="text-right text-xs text-slate-500">
+          <p>Pay period ending</p>
+          <p className="font-bold text-slate-900 text-sm">
+            {formatDate(slip.periodEnd)}
+          </p>
+        </div>
+      </div>
       <div className="grid grid-cols-[minmax(0,1fr)_330px] gap-8 items-start mb-5">
-        <div className="space-y-4"><div className="whitespace-pre-line leading-6"><p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">Paid to</p><p className="font-bold text-base">{slip.employeeName || "Employee name"}</p><p className="text-slate-600">{slip.employeeAddress || "Employee address"}</p><p className="text-slate-600">Employee ID: <b className="text-slate-900">{slip.employeeNumber || "—"}</b></p></div>{verifyUrl && <div className="flex items-center gap-3 border-t border-slate-200 pt-3"><QRCodeSVG value={verifyUrl} size={58} /><div className="text-xs leading-5"><a href={verifyUrl} className="font-semibold text-blue-600">View and verify online</a><br /><span className="text-slate-500">Scan the QR code to validate this pay slip.</span></div></div>}</div>
-        <div className="rounded-lg border border-slate-200 overflow-hidden"><div className="bg-slate-900 text-white px-4 py-3"><p className="font-bold text-sm">{slip.companyName || "Company name"}</p><p className="text-xs text-slate-300 mt-0.5">ABN: {slip.companyAbn || "—"}</p></div><div className="p-4 bg-slate-50"><div className="grid grid-cols-2 gap-y-2 text-xs"><span className="text-slate-500">Period starting</span><b className="text-right">{formatDate(slip.periodStart)}</b><span className="text-slate-500">Date paid</span><b className="text-right">{formatDate(slip.datePaid)}</b></div><div className="border-t border-slate-200 my-3" /><div className="space-y-1.5 text-xs"><div className="flex justify-between"><span>Base pay rate</span><b>{money(slip.payRate)} / hour</b></div><div className="flex justify-between"><span>Hours paid</span><b>{number(slip.hours).toFixed(2)}</b></div><div className="flex justify-between"><span>Gross earnings</span><b>{money(gross)}</b></div><div className="flex justify-between text-sm pt-1 border-t border-slate-200"><span className="font-bold">Net payment</span><b>{money(net)}</b></div><div className="flex justify-between"><span>Super payment</span><b>{money(slip.superAmount)}</b></div></div></div></div>
+        <div className="space-y-4">
+          <div className="whitespace-pre-line leading-6">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">
+              Paid to
+            </p>
+            <p className="font-bold text-base">
+              {slip.employeeName || "Employee name"}
+            </p>
+            <p className="text-slate-600">
+              {slip.employeeAddress || "Employee address"}
+            </p>
+            <p className="text-slate-600">
+              Employee ID:{" "}
+              <b className="text-slate-900">{slip.employeeNumber || "—"}</b>
+            </p>
+          </div>
+          {verifyUrl && (
+            <div className="flex items-center gap-3 border-t border-slate-200 pt-3">
+              <QRCodeSVG value={verifyUrl} size={58} />
+              <div className="text-xs leading-5">
+                <a href={verifyUrl} className="font-semibold text-blue-600">
+                  View and verify online
+                </a>
+                <br />
+                <span className="text-slate-500">
+                  Scan the QR code to validate this pay slip.
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="rounded-lg border border-slate-200 overflow-hidden">
+          <div className="bg-slate-900 text-white px-4 py-3">
+            <p className="font-bold text-sm">
+              {slip.companyName || "Company name"}
+            </p>
+            <p className="text-xs text-slate-300 mt-0.5">
+              ABN: {slip.companyAbn || "—"}
+            </p>
+          </div>
+          <div className="p-4 bg-slate-50">
+            <div className="grid grid-cols-2 gap-y-2 text-xs">
+              <span className="text-slate-500">Period starting</span>
+              <b className="text-right">{formatDate(slip.periodStart)}</b>
+              <span className="text-slate-500">Date paid</span>
+              <b className="text-right">{formatDate(slip.datePaid)}</b>
+            </div>
+            <div className="border-t border-slate-200 my-3" />
+            <div className="space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span>Base pay rate</span>
+                <b>{money(slip.payRate)} / hour</b>
+              </div>
+              <div className="flex justify-between">
+                <span>Hours paid</span>
+                <b>{number(slip.hours).toFixed(2)}</b>
+              </div>
+              <div className="flex justify-between">
+                <span>Gross earnings</span>
+                <b>{money(gross)}</b>
+              </div>
+              <div className="flex justify-between text-sm pt-1 border-t border-slate-200">
+                <span className="font-bold">Net payment</span>
+                <b>{money(net)}</b>
+              </div>
+              <div className="flex justify-between">
+                <span>Super payment</span>
+                <b>{money(slip.superAmount)}</b>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Section title="Pay Slip Components" headers={["Hours/Units", "Rate", "This Pay", "Year To Date"]}>
+      <Section
+        title="Pay Slip Components"
+        headers={["Hours/Units", "Rate", "This Pay", "Year To Date"]}
+      >
         <h3 className="font-bold text-base mt-3">Wages and Earnings</h3>
-        <div className={`${row} py-2.5 border-b border-slate-100`}><span>{slip.earningsName}</span><span className="text-right tabular-nums">{number(slip.hours).toFixed(2)}</span><span className="text-right tabular-nums">{money(slip.payRate)}</span><span className="text-right tabular-nums">{money(gross)}</span><span className="text-right tabular-nums">{money(slip.ytdEarnings)}</span></div>
-        {slip.earningsNote && <p className="pl-3 text-xs text-slate-600 py-2"><b>Notes:</b> {slip.earningsNote}</p>}
+        <div className={`${row} py-2.5 border-b border-slate-100`}>
+          <span>{slip.earningsName}</span>
+          <span className="text-right tabular-nums">
+            {number(slip.hours).toFixed(2)}
+          </span>
+          <span className="text-right tabular-nums">{money(slip.payRate)}</span>
+          <span className="text-right tabular-nums">{money(gross)}</span>
+          <span className="text-right tabular-nums">
+            {money(slip.ytdEarnings)}
+          </span>
+        </div>
+        {slip.earningsNote && (
+          <p className="pl-3 text-xs text-slate-600 py-2">
+            <b>Notes:</b> {slip.earningsNote}
+          </p>
+        )}
         <Total values={[money(gross), money(slip.ytdEarnings)]} />
         <h3 className="font-bold text-base mt-3">Taxes</h3>
-        <div className={`${row} py-2.5 border-b border-slate-100`}><span>{slip.taxName}</span><span /><span /><span className="text-right tabular-nums">{money(slip.payg)}</span><span className="text-right tabular-nums">{money(slip.ytdPayg)}</span></div>
+        <div className={`${row} py-2.5 border-b border-slate-100`}>
+          <span>{slip.taxName}</span>
+          <span />
+          <span />
+          <span className="text-right tabular-nums">{money(slip.payg)}</span>
+          <span className="text-right tabular-nums">{money(slip.ytdPayg)}</span>
+        </div>
         <Total values={[money(slip.payg), money(slip.ytdPayg)]} />
         <h3 className="font-bold text-base mt-3">Superannuation Breakdown</h3>
-        <div className={`${row} py-2.5 border-b border-slate-100`}><span>{slip.superName}</span><span /><span /><span className="text-right tabular-nums">{money(slip.superAmount)}</span><span className="text-right tabular-nums">{money(slip.ytdSuper)}</span></div>
+        <div className={`${row} py-2.5 border-b border-slate-100`}>
+          <span>{slip.superName}</span>
+          <span />
+          <span />
+          <span className="text-right tabular-nums">
+            {money(slip.superAmount)}
+          </span>
+          <span className="text-right tabular-nums">
+            {money(slip.ytdSuper)}
+          </span>
+        </div>
         <Total values={[money(slip.superAmount), money(slip.ytdSuper)]} />
       </Section>
 
-      <section className="mt-5"><div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 bg-slate-50 border-b px-2 py-1 font-bold text-base"><span>Bank Payments</span><span>Account</span><span className="text-right">This Pay</span></div><div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 px-2 py-2"><span>{slip.employeeName || "Employee"}<small className="block text-slate-600">{slip.paymentMethod}</small></span><span>{maskAccount(slip.bankAccount)}</span><span className="text-right">{money(net)}</span></div></section>
-      <section className="mt-4"><div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 bg-slate-50 border-b px-2 py-1 font-bold text-base"><span>Super Contributions</span><span>Member Number</span><span className="text-right">This Pay</span></div><div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 px-2 py-2"><span>{slip.superFund}<small className="block text-slate-600">{slip.superType}</small></span><span>{maskAccount(slip.superMemberNumber)}</span><span className="text-right">{money(slip.superAmount)}</span></div></section>
+      <section className="mt-5">
+        <div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 bg-slate-50 border-b px-2 py-1 font-bold text-base">
+          <span>Bank Payments</span>
+          <span>Account</span>
+          <span className="text-right">This Pay</span>
+        </div>
+        <div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 px-2 py-2">
+          <span>
+            {slip.employeeName || "Employee"}
+            <small className="block text-slate-600">{slip.paymentMethod}</small>
+          </span>
+          <span>{maskAccount(slip.bankAccount)}</span>
+          <span className="text-right">{money(net)}</span>
+        </div>
+      </section>
+      <section className="mt-4">
+        <div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 bg-slate-50 border-b px-2 py-1 font-bold text-base">
+          <span>Super Contributions</span>
+          <span>Member Number</span>
+          <span className="text-right">This Pay</span>
+        </div>
+        <div className="grid grid-cols-[minmax(210px,1fr)_260px_120px] gap-3 px-2 py-2">
+          <span>
+            {slip.superFund}
+            <small className="block text-slate-600">{slip.superType}</small>
+          </span>
+          <span>{maskAccount(slip.superMemberNumber)}</span>
+          <span className="text-right">{money(slip.superAmount)}</span>
+        </div>
+      </section>
     </article>
   );
 }
 
-function Section({ title, headers, children }: { title: string; headers: string[]; children: React.ReactNode }) {
-  return <section><div className="grid grid-cols-[minmax(190px,1fr)_88px_88px_105px_115px] gap-2 bg-slate-900 text-white px-3 py-2 font-bold text-sm rounded-t"><span>{title}</span>{headers.map((h) => <span className="text-right text-[11px]" key={h}>{h}</span>)}</div>{children}</section>;
+function Section({
+  title,
+  headers,
+  children,
+}: {
+  title: string;
+  headers: string[];
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <div className="grid grid-cols-[minmax(190px,1fr)_88px_88px_105px_115px] gap-2 bg-slate-900 text-white px-3 py-2 font-bold text-sm rounded-t">
+        <span>{title}</span>
+        {headers.map((h) => (
+          <span className="text-right text-[11px]" key={h}>
+            {h}
+          </span>
+        ))}
+      </div>
+      {children}
+    </section>
+  );
 }
-function Total({ values }: { values: string[] }) { return <div className="grid grid-cols-[1fr_105px_115px] bg-slate-100 px-3 py-1.5 font-bold tabular-nums"><span /><span className="text-right">{values[0]}</span><span className="text-right">{values[1]}</span></div>; }
-function formatDate(value: string) { return value ? new Intl.DateTimeFormat("en-AU").format(new Date(`${value}T12:00:00`)) : "—"; }
-function maskAccount(value: string) { return value.length > 4 ? `••••${value.slice(-4)}` : value || "—"; }
-function formatPeriod(value: string) { return value ? new Intl.DateTimeFormat("en-AU", { month: "short", year: "numeric" }).format(new Date(`${value}T12:00:00`)) : "—"; }
+function Total({ values }: { values: string[] }) {
+  return (
+    <div className="grid grid-cols-[1fr_105px_115px] bg-slate-100 px-3 py-1.5 font-bold tabular-nums">
+      <span />
+      <span className="text-right">{values[0]}</span>
+      <span className="text-right">{values[1]}</span>
+    </div>
+  );
+}
+function formatDate(value: string) {
+  return value
+    ? new Intl.DateTimeFormat("en-AU").format(new Date(`${value}T12:00:00`))
+    : "—";
+}
+function maskAccount(value: string) {
+  return value.length > 4 ? `••••${value.slice(-4)}` : value || "—";
+}
+function formatPeriod(value: string) {
+  return value
+    ? new Intl.DateTimeFormat("en-AU", {
+        month: "short",
+        year: "numeric",
+      }).format(new Date(`${value}T12:00:00`))
+    : "—";
+}
 
 export default function PayrollSlipManager() {
   const { toast } = useToast();
@@ -100,29 +341,484 @@ export default function PayrollSlipManager() {
   const [editing, setEditing] = useState<PayrollSlip>(blank);
   const [view, setView] = useState<"list" | "editor">("list");
   const { data: companies } = useListCompanies();
-  const employeeParams = editing.companyId ? { companyId: Number(editing.companyId) } : undefined;
-  const { data: employees } = useListEmployees(employeeParams, { query: { enabled: !!editing.companyId, queryKey: getListEmployeesQueryKey(employeeParams) } });
-  const gross = useMemo(() => number(editing.payRate) * number(editing.hours), [editing.payRate, editing.hours]);
-  useEffect(() => { payrollSlipFetch<PayrollSlip[]>("/employee-pay-slips").then(setSlips).catch(() => toast({ variant: "destructive", title: "Could not load saved pay slips" })); }, [toast]);
-  const set = (key: keyof PayrollSlip, value: string) => setEditing((old) => ({ ...old, [key]: value }));
-  const selectCompany = (companyId: string) => { const c = companies?.find((x) => String(x.id) === companyId); setEditing((old) => ({ ...old, companyId, employeeId: "", companyName: c?.name || "", companyAbn: (c as any)?.taxNumber || "", employeeName: "", employeeNumber: "", employeeAddress: "" })); };
-  const selectEmployee = (employeeId: string) => { const e = employees?.find((x) => String(x.id) === employeeId); setEditing((old) => ({ ...old, employeeId, employeeName: e ? `${e.firstName} ${e.lastName}` : "", employeeNumber: e?.employeeNumber || "", employeeAddress: (e as any)?.address || "", payRate: (e as any)?.hourlyRate?.toString() || old.payRate, bankAccount: e?.bankAccount || "" })); };
-  const save = async () => { if (!editing.companyId || !editing.employeeId) { toast({ variant: "destructive", title: "Select a company and employee first" }); return; } try { const { id, verificationToken, ...payload } = editing; const saved = await payrollSlipFetch<PayrollSlip>(id ? `/employee-pay-slips/${id}` : "/employee-pay-slips", { method: id ? "PATCH" : "POST", body: JSON.stringify(payload) }); setEditing(saved); setSlips((all) => [saved, ...all.filter((x) => x.id !== saved.id)]); setView("list"); toast({ title: "Employee payslip saved", description: "The QR verification link is ready." }); } catch { toast({ variant: "destructive", title: "Could not save payslip" }); } };
+  const employeeParams = editing.companyId
+    ? { companyId: Number(editing.companyId) }
+    : undefined;
+  const { data: employees } = useListEmployees(employeeParams, {
+    query: {
+      enabled: !!editing.companyId,
+      queryKey: getListEmployeesQueryKey(employeeParams),
+    },
+  });
+  const gross = useMemo(
+    () => number(editing.payRate) * number(editing.hours),
+    [editing.payRate, editing.hours],
+  );
+  useEffect(() => {
+    payrollSlipFetch<PayrollSlip[]>("/employee-pay-slips")
+      .then(setSlips)
+      .catch(() =>
+        toast({
+          variant: "destructive",
+          title: "Could not load saved pay slips",
+        }),
+      );
+  }, [toast]);
+  const set = (key: keyof PayrollSlip, value: string) =>
+    setEditing((old) => ({ ...old, [key]: value }));
+  const selectCompany = (companyId: string) => {
+    const c = companies?.find((x) => String(x.id) === companyId);
+    setEditing((old) => ({
+      ...old,
+      companyId,
+      employeeId: "",
+      companyName: c?.name || "",
+      companyAbn: (c as any)?.taxNumber || "",
+      employeeName: "",
+      employeeNumber: "",
+      employeeAddress: "",
+    }));
+  };
+  const selectEmployee = (employeeId: string) => {
+    const e = employees?.find((x) => String(x.id) === employeeId);
+    const latestSlip = slips.find((s) => String(s.employeeId) === employeeId);
+    setEditing((old) => ({
+      ...old,
+      employeeId,
+      employeeName: e ? `${e.firstName} ${e.lastName}` : "",
+      employeeNumber: e?.employeeNumber || "",
+      employeeAddress: (e as any)?.address || "",
+      payRate: (e as any)?.hourlyRate?.toString() || old.payRate,
+      bankAccount: e?.bankAccount || "",
+      // copy common YTD / tax / super fields from the most recent saved slip when available
+      ytdEarnings: latestSlip?.ytdEarnings ?? old.ytdEarnings,
+      ytdPayg: latestSlip?.ytdPayg ?? old.ytdPayg,
+      ytdSuper: latestSlip?.ytdSuper ?? old.ytdSuper,
+      superFund: latestSlip?.superFund ?? old.superFund,
+      superName: latestSlip?.superName ?? old.superName,
+      superMemberNumber: latestSlip?.superMemberNumber ?? old.superMemberNumber,
+      superAmount: latestSlip?.superAmount ?? old.superAmount,
+      taxName: latestSlip?.taxName ?? old.taxName,
+      paymentMethod: latestSlip?.paymentMethod ?? old.paymentMethod,
+    }));
+  };
+  const save = async () => {
+    if (!editing.companyId || !editing.employeeId) {
+      toast({
+        variant: "destructive",
+        title: "Select a company and employee first",
+      });
+      return;
+    }
+    try {
+      const { id, verificationToken, ...payload } = editing;
+      const saved = await payrollSlipFetch<PayrollSlip>(
+        id ? `/employee-pay-slips/${id}` : "/employee-pay-slips",
+        { method: id ? "PATCH" : "POST", body: JSON.stringify(payload) },
+      );
+      setEditing(saved);
+      setSlips((all) => [saved, ...all.filter((x) => x.id !== saved.id)]);
+      setView("list");
+      toast({
+        title: "Employee payslip saved",
+        description: "The QR verification link is ready.",
+      });
+    } catch {
+      toast({ variant: "destructive", title: "Could not save payslip" });
+    }
+  };
   const print = () => window.print();
 
   if (view === "list") {
-    return <div className="space-y-6 max-w-[1500px] mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h1 className="text-3xl font-bold tracking-tight">Employee Pay Slips</h1><p className="text-muted-foreground mt-2">Create, manage, and print detailed employee payroll records.</p></div><Button onClick={() => { setEditing(blank()); setView("editor"); }}><Plus className="w-4 h-4 mr-2" />Create Pay Slip</Button></div>
-      <Card><CardContent className="pt-6"><div className="rounded-md border overflow-x-auto"><table className="w-full text-sm"><thead className="bg-muted/50 text-muted-foreground"><tr className="border-b"><th className="text-left font-medium px-4 py-3">Period</th><th className="text-left font-medium px-4 py-3">Employee</th><th className="text-left font-medium px-4 py-3">Company</th><th className="text-right font-medium px-4 py-3">Gross</th><th className="text-right font-medium px-4 py-3">Net</th><th className="text-left font-medium px-4 py-3">Status</th></tr></thead><tbody>{slips.length === 0 ? <tr><td colSpan={6} className="h-40 text-center text-muted-foreground"><WalletCards className="w-8 h-8 mx-auto mb-2 opacity-30" />No employee pay slips yet. Create your first one.</td></tr> : slips.map((slip) => { const grossAmount = number(slip.payRate) * number(slip.hours); const netAmount = grossAmount - number(slip.payg); return <tr key={String(slip.id)} className="border-b last:border-0 cursor-pointer hover:bg-muted/50" onClick={() => { setEditing(slip); setView("editor"); }}><td className="px-4 py-3 font-medium">{formatPeriod(slip.periodEnd || slip.datePaid)}</td><td className="px-4 py-3"><span className="inline-flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" />{slip.employeeName}</span></td><td className="px-4 py-3 text-muted-foreground"><span className="inline-flex items-center gap-2"><Building2 className="h-4 w-4" />{slip.companyName}</span></td><td className="px-4 py-3 text-right text-muted-foreground">{money(grossAmount)}</td><td className="px-4 py-3 text-right font-medium">{money(netAmount)}</td><td className="px-4 py-3"><Badge className="bg-blue-500 hover:bg-blue-600">Saved</Badge></td></tr>; })}</tbody></table></div></CardContent></Card>
-    </div>;
+    return (
+      <div className="space-y-6 max-w-[1500px] mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Employee Pay Slips
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Create, manage, and print detailed employee payroll records.
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              setEditing(blank());
+              setView("editor");
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Pay Slip
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="rounded-md border overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-muted-foreground">
+                  <tr className="border-b">
+                    <th className="text-left font-medium px-4 py-3">Period</th>
+                    <th className="text-left font-medium px-4 py-3">
+                      Employee
+                    </th>
+                    <th className="text-left font-medium px-4 py-3">Company</th>
+                    <th className="text-right font-medium px-4 py-3">Gross</th>
+                    <th className="text-right font-medium px-4 py-3">Net</th>
+                    <th className="text-left font-medium px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {slips.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="h-40 text-center text-muted-foreground"
+                      >
+                        <WalletCards className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                        No employee pay slips yet. Create your first one.
+                      </td>
+                    </tr>
+                  ) : (
+                    slips.map((slip) => {
+                      const grossAmount =
+                        number(slip.payRate) * number(slip.hours);
+                      const netAmount = grossAmount - number(slip.payg);
+                      return (
+                        <tr
+                          key={String(slip.id)}
+                          className="border-b last:border-0 cursor-pointer hover:bg-muted/50"
+                          onClick={() => {
+                            setEditing(slip);
+                            setView("editor");
+                          }}
+                        >
+                          <td className="px-4 py-3 font-medium">
+                            {formatPeriod(slip.periodEnd || slip.datePaid)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center gap-2">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                              {slip.employeeName}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            <span className="inline-flex items-center gap-2">
+                              <Building2 className="h-4 w-4" />
+                              {slip.companyName}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right text-muted-foreground">
+                            {money(grossAmount)}
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium">
+                            {money(netAmount)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge className="bg-blue-500 hover:bg-blue-600">
+                              Saved
+                            </Badge>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
-  return <div className="space-y-6 max-w-[1500px] mx-auto">
-    <div className="flex flex-col md:flex-row justify-between gap-4"><div className="flex items-center gap-3"><Button variant="outline" size="icon" onClick={() => setView("list")}><ArrowLeft className="w-4 h-4" /></Button><div><h1 className="text-3xl font-bold tracking-tight">{editing.id ? "Edit Employee Pay Slip" : "Create Employee Pay Slip"}</h1><p className="text-muted-foreground mt-2">Create the detailed payroll payslips shown in your reference.</p></div></div><div className="flex gap-2"><Button variant="outline" onClick={() => setEditing(blank())}><FilePlus2 className="w-4 h-4 mr-2" />New payslip</Button><Button onClick={save}><Save className="w-4 h-4 mr-2" />Save payslip</Button></div></div>
-    <div className="grid xl:grid-cols-[440px_minmax(0,1fr)] gap-6 items-start"><Card><CardHeader><CardTitle>Pay slip details</CardTitle><CardDescription>Every field is reflected in the print-ready payslip.</CardDescription></CardHeader><CardContent className="space-y-6"><FieldGroup title="Employee & period"><div className="grid gap-3"><Select value={editing.companyId} onValueChange={selectCompany}><SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger><SelectContent>{companies?.map((c) => <SelectItem value={String(c.id)} key={c.id}>{c.name}</SelectItem>)}</SelectContent></Select><Select value={editing.employeeId} onValueChange={selectEmployee} disabled={!editing.companyId}><SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger><SelectContent>{employees?.map((e) => <SelectItem value={String(e.id)} key={e.id}>{e.firstName} {e.lastName}</SelectItem>)}</SelectContent></Select><div className="grid grid-cols-2 gap-3"><Text label="Company name" value={editing.companyName} set={(v) => set("companyName", v)} /><Text label="Company ABN" value={editing.companyAbn} set={(v) => set("companyAbn", v)} /><Text label="Employee name" value={editing.employeeName} set={(v) => set("employeeName", v)} /><Text label="Employee ID" value={editing.employeeNumber} set={(v) => set("employeeNumber", v)} /></div><Text label="Employee address" value={editing.employeeAddress} set={(v) => set("employeeAddress", v)} /><DateFields slip={editing} set={set} /></div></FieldGroup><FieldGroup title="Earnings"><div className="grid grid-cols-2 gap-3"><Text label="Hourly rate" value={editing.payRate} set={(v) => set("payRate", v)} type="number" /><Text label="Hours paid" value={editing.hours} set={(v) => set("hours", v)} type="number" /><Text label="Earnings label" value={editing.earningsName} set={(v) => set("earningsName", v)} /><Text label="YTD earnings" value={editing.ytdEarnings} set={(v) => set("ytdEarnings", v)} type="number" /></div><p className="text-sm font-medium pt-2">This pay: {money(gross)}</p><Text label="Notes" value={editing.earningsNote} set={(v) => set("earningsNote", v)} /></FieldGroup><FieldGroup title="Tax & super"><div className="grid grid-cols-2 gap-3"><Text label="Tax label" value={editing.taxName} set={(v) => set("taxName", v)} /><Text label="Tax this pay" value={editing.payg} set={(v) => set("payg", v)} type="number" /><Text label="YTD tax" value={editing.ytdPayg} set={(v) => set("ytdPayg", v)} type="number" /><Text label="Super fund" value={editing.superFund} set={(v) => set("superFund", v)} /><Text label="Super label" value={editing.superName} set={(v) => set("superName", v)} /><Text label="Member number" value={editing.superMemberNumber} set={(v) => set("superMemberNumber", v)} /><Text label="Super this pay" value={editing.superAmount} set={(v) => set("superAmount", v)} type="number" /><Text label="YTD super" value={editing.ytdSuper} set={(v) => set("ytdSuper", v)} type="number" /></div><Text label="Contribution type" value={editing.superType} set={(v) => set("superType", v)} /></FieldGroup><FieldGroup title="Bank payment"><div className="grid grid-cols-2 gap-3"><Text label="Payment method" value={editing.paymentMethod} set={(v) => set("paymentMethod", v)} /><Text label="Account number" value={editing.bankAccount} set={(v) => set("bankAccount", v)} /></div></FieldGroup></CardContent></Card>
-      <div className="space-y-4"><div className="flex justify-between items-center"><div className="font-semibold">Live print preview</div><Button variant="outline" onClick={print}><Printer className="w-4 h-4 mr-2" />Print / Save PDF</Button></div>{editing.verificationToken && <div className="flex items-center gap-2 text-sm text-emerald-700"><QrCode className="w-4 h-4" />QR verification included in the printed payslip.</div>}<Card className="overflow-hidden shadow-md"><SlipPreview slip={editing} /></Card></div></div>
-  </div>;
+  return (
+    <div className="space-y-6 max-w-[1500px] mx-auto">
+      <div className="flex flex-col md:flex-row justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="icon" onClick={() => setView("list")}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {editing.id
+                ? "Edit Employee Pay Slip"
+                : "Create Employee Pay Slip"}
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Create the detailed payroll payslips shown in your reference.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setEditing(blank())}>
+            <FilePlus2 className="w-4 h-4 mr-2" />
+            New payslip
+          </Button>
+          <Button onClick={save}>
+            <Save className="w-4 h-4 mr-2" />
+            Save payslip
+          </Button>
+        </div>
+      </div>
+      <div className="grid xl:grid-cols-[440px_minmax(0,1fr)] gap-6 items-start">
+        <Card>
+          <CardHeader>
+            <CardTitle>Pay slip details</CardTitle>
+            <CardDescription>
+              Every field is reflected in the print-ready payslip.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <FieldGroup title="Employee & period">
+              <div className="grid gap-3">
+                <Select value={editing.companyId} onValueChange={selectCompany}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies?.map((c) => (
+                      <SelectItem value={String(c.id)} key={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={editing.employeeId}
+                  onValueChange={selectEmployee}
+                  disabled={!editing.companyId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select employee" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees?.map((e) => (
+                      <SelectItem value={String(e.id)} key={e.id}>
+                        {e.firstName} {e.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="grid grid-cols-2 gap-3">
+                  <Text
+                    label="Company name"
+                    value={editing.companyName}
+                    set={(v) => set("companyName", v)}
+                  />
+                  <Text
+                    label="Company ABN"
+                    value={editing.companyAbn}
+                    set={(v) => set("companyAbn", v)}
+                  />
+                  <Text
+                    label="Employee name"
+                    value={editing.employeeName}
+                    set={(v) => set("employeeName", v)}
+                  />
+                  <Text
+                    label="Employee ID"
+                    value={editing.employeeNumber}
+                    set={(v) => set("employeeNumber", v)}
+                  />
+                </div>
+                <Text
+                  label="Employee address"
+                  value={editing.employeeAddress}
+                  set={(v) => set("employeeAddress", v)}
+                />
+                <DateFields slip={editing} set={set} />
+              </div>
+            </FieldGroup>
+            <FieldGroup title="Earnings">
+              <div className="grid grid-cols-2 gap-3">
+                <Text
+                  label="Hourly rate"
+                  value={editing.payRate}
+                  set={(v) => set("payRate", v)}
+                  type="number"
+                />
+                <Text
+                  label="Hours paid"
+                  value={editing.hours}
+                  set={(v) => set("hours", v)}
+                  type="number"
+                />
+                <Text
+                  label="Earnings label"
+                  value={editing.earningsName}
+                  set={(v) => set("earningsName", v)}
+                />
+                <Text
+                  label="YTD earnings"
+                  value={editing.ytdEarnings}
+                  set={(v) => set("ytdEarnings", v)}
+                  type="number"
+                />
+              </div>
+              <p className="text-sm font-medium pt-2">
+                This pay: {money(gross)}
+              </p>
+              <Text
+                label="Notes"
+                value={editing.earningsNote}
+                set={(v) => set("earningsNote", v)}
+              />
+            </FieldGroup>
+            <FieldGroup title="Tax & super">
+              <div className="grid grid-cols-2 gap-3">
+                <Text
+                  label="Tax label"
+                  value={editing.taxName}
+                  set={(v) => set("taxName", v)}
+                />
+                <Text
+                  label="Tax this pay"
+                  value={editing.payg}
+                  set={(v) => set("payg", v)}
+                  type="number"
+                />
+                <Text
+                  label="YTD tax"
+                  value={editing.ytdPayg}
+                  set={(v) => set("ytdPayg", v)}
+                  type="number"
+                />
+                <Text
+                  label="Super fund"
+                  value={editing.superFund}
+                  set={(v) => set("superFund", v)}
+                />
+                <Text
+                  label="Super label"
+                  value={editing.superName}
+                  set={(v) => set("superName", v)}
+                />
+                <Text
+                  label="Member number"
+                  value={editing.superMemberNumber}
+                  set={(v) => set("superMemberNumber", v)}
+                />
+                <Text
+                  label="Super this pay"
+                  value={editing.superAmount}
+                  set={(v) => set("superAmount", v)}
+                  type="number"
+                />
+                <Text
+                  label="YTD super"
+                  value={editing.ytdSuper}
+                  set={(v) => set("ytdSuper", v)}
+                  type="number"
+                />
+              </div>
+              <Text
+                label="Contribution type"
+                value={editing.superType}
+                set={(v) => set("superType", v)}
+              />
+            </FieldGroup>
+            <FieldGroup title="Bank payment">
+              <div className="grid grid-cols-2 gap-3">
+                <Text
+                  label="Payment method"
+                  value={editing.paymentMethod}
+                  set={(v) => set("paymentMethod", v)}
+                />
+                <Text
+                  label="Account number"
+                  value={editing.bankAccount}
+                  set={(v) => set("bankAccount", v)}
+                />
+              </div>
+            </FieldGroup>
+          </CardContent>
+        </Card>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div className="font-semibold">Live print preview</div>
+            <Button variant="outline" onClick={print}>
+              <Printer className="w-4 h-4 mr-2" />
+              Print / Save PDF
+            </Button>
+          </div>
+          {editing.verificationToken && (
+            <div className="flex items-center gap-2 text-sm text-emerald-700">
+              <QrCode className="w-4 h-4" />
+              QR verification included in the printed payslip.
+            </div>
+          )}
+          <Card className="overflow-hidden shadow-md">
+            <SlipPreview slip={editing} />
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
 }
-function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) { return <section className="space-y-3"><h3 className="font-semibold border-b pb-2">{title}</h3>{children}</section>; }
-function Text({ label, value, set, type = "text" }: { label: string; value: string; set: (v: string) => void; type?: string }) { return <div className="space-y-1"><Label className="text-xs">{label}</Label><Input type={type} value={value} onChange={(e) => set(e.target.value)} min={type === "number" ? "0" : undefined} /></div>; }
-function DateFields({ slip, set }: { slip: PayrollSlip; set: (k: keyof PayrollSlip, v: string) => void }) { return <div className="grid grid-cols-3 gap-2"><Text label="Period start" value={slip.periodStart} set={(v) => set("periodStart", v)} type="date" /><Text label="Period end" value={slip.periodEnd} set={(v) => set("periodEnd", v)} type="date" /><Text label="Date paid" value={slip.datePaid} set={(v) => set("datePaid", v)} type="date" /></div>; }
+function FieldGroup({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <h3 className="font-semibold border-b pb-2">{title}</h3>
+      {children}
+    </section>
+  );
+}
+function Text({
+  label,
+  value,
+  set,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  set: (v: string) => void;
+  type?: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Input
+        type={type}
+        value={value}
+        onChange={(e) => set(e.target.value)}
+        min={type === "number" ? "0" : undefined}
+      />
+    </div>
+  );
+}
+function DateFields({
+  slip,
+  set,
+}: {
+  slip: PayrollSlip;
+  set: (k: keyof PayrollSlip, v: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      <Text
+        label="Period start"
+        value={slip.periodStart}
+        set={(v) => set("periodStart", v)}
+        type="date"
+      />
+      <Text
+        label="Period end"
+        value={slip.periodEnd}
+        set={(v) => set("periodEnd", v)}
+        type="date"
+      />
+      <Text
+        label="Date paid"
+        value={slip.datePaid}
+        set={(v) => set("datePaid", v)}
+        type="date"
+      />
+    </div>
+  );
+}
