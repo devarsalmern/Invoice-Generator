@@ -5,6 +5,7 @@ import {
   Users, 
   FileText, 
   Receipt, 
+  WalletCards,
   History, 
   Settings,
   LogOut
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { href: "/companies", label: "Companies", icon: Building2 },
   { href: "/employees", label: "Employees", icon: Users },
   { href: "/payslips", label: "Payslips", icon: FileText },
+  { href: "/employee-pay-slips", label: "Employee Pay Slips", icon: WalletCards },
   { href: "/invoices", label: "Invoices", icon: Receipt },
   { href: "/audit-logs", label: "Audit Logs", icon: History },
   { href: "/settings", label: "Settings", icon: Settings },

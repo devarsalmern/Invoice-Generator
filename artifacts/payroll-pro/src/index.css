@@ -185,3 +185,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body { background: white !important; }
+  body > * { visibility: hidden; }
+  .payroll-slip, .payroll-slip * { visibility: visible; }
+  .payroll-slip { position: absolute; left: 0; top: 0; width: 100%; padding: 10mm !important; }
+}

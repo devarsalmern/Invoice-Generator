@@ -24,6 +24,7 @@ import PayslipForm from "@/pages/payslips/PayslipForm";
 import PayslipDetail from "@/pages/payslips/PayslipDetail";
 import PayslipPrint from "@/pages/payslips/PayslipPrint";
 import PayslipEditForm from "@/pages/payslips/PayslipEditForm";
+import PayrollSlipManager from "@/pages/payroll-slips/PayrollSlipManager";
 
 import InvoiceList from "@/pages/invoices/InvoiceList";
 import InvoiceForm from "@/pages/invoices/InvoiceForm";
@@ -98,6 +99,10 @@ function Router() {
       </Route>
       <Route path="/payslips/:id">
         {() => <AppLayout><ProtectedRoute component={PayslipDetail} /></AppLayout>}
+      </Route>
+
+      <Route path="/employee-pay-slips">
+        {() => <AppLayout><ProtectedRoute component={PayrollSlipManager} /></AppLayout>}
       </Route>
 
       <Route path="/invoices">
