@@ -162,18 +162,6 @@ export default function PayslipInvoiceView({
         <div className="border p-3"><b>Super contribution</b><p className="mt-1">{payslip.superFund || "AustralianSuper"}</p><p className="text-gray-600">{payslip.superType || "Super Guarantee"} · {maskAccount(payslip.superMemberNumber)}</p><p className="font-semibold mt-2">This pay: {fmtAud(payslip.superAmount)}</p></div>
       </section>
 
-      {/* View online link */}
-      {verifyUrl && (
-        <div className="mb-5">
-          <a
-            href={verifyUrl}
-            className="text-blue-600 text-sm font-medium hover:underline"
-          >
-            View online
-          </a>
-        </div>
-      )}
-
       {/* Line items table */}
       <table className="w-full border-collapse mb-4">
         <thead>
