@@ -90,7 +90,7 @@ export default function EmployeeDetail() {
   if (isError || !employee)
     return (
       <div className="text-center py-12">
-        <h2 className="text-2xl font-bold">Employee not found :</h2>
+        <h2 className="text-2xl font-bold">Employee not found</h2>
         <Button className="mt-4" onClick={() => setLocation("/employees")}>
           Back to Employees
         </Button>
