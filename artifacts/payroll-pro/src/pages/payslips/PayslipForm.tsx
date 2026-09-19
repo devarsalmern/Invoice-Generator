@@ -33,6 +33,7 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, ArrowLeft, Plus, Trash2, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
+import { payrollSlipFetch } from "../payroll-slips/api";
 
 const itemSchema = z.object({
   date: z.string().min(1, "Date required"),
@@ -53,6 +54,22 @@ const payslipSchema = z.object({
   showTfn: z.boolean(),
   taxName: z.string().optional(),
   taxPercentage: z.string().optional(),
+  // payroll-style fields
+  payRate: z.string().optional(),
+  hours: z.string().optional(),
+  earningsName: z.string().optional(),
+  ytdEarnings: z.string().optional(),
+  earningsNote: z.string().optional(),
+  payg: z.string().optional(),
+  ytdPayg: z.string().optional(),
+  superFund: z.string().optional(),
+  superName: z.string().optional(),
+  superMemberNumber: z.string().optional(),
+  superAmount: z.string().optional(),
+  ytdSuper: z.string().optional(),
+  superType: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  bankAccount: z.string().optional(),
   items: z.array(itemSchema).min(1, "At least one line item is required"),
 });
 
@@ -63,6 +80,10 @@ const parseNum = (v: string | undefined) => {
   return isNaN(n) ? 0 : n;
 };
 const fmt2 = (n: number) => n.toFixed(2);
+const money = (n: number) =>
+  new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(
+    n,
+  );
 
 const months = [
   { value: "1", label: "January" },
@@ -140,6 +161,22 @@ export default function PayslipForm() {
           unitPrice: "0",
         },
       ],
+      // payroll defaults
+      payRate: "0",
+      hours: "0",
+      earningsName: "Permanent Ordinary Hours",
+      ytdEarnings: "0",
+      earningsNote: "",
+      payg: "0",
+      ytdPayg: "0",
+      superFund: "AustralianSuper",
+      superName: "SG",
+      superMemberNumber: "",
+      superAmount: "0",
+      ytdSuper: "0",
+      superType: "Super Guarantee",
+      paymentMethod: "Manual deposit",
+      bankAccount: "",
     },
   });
 
@@ -182,6 +219,26 @@ export default function PayslipForm() {
   const taxAmount = includeTax ? subtotal * (taxPercentage / 100) : 0;
   const totalAmount = Math.max(0, subtotal - taxAmount);
 
+  // payroll-style watches & calculations
+  const payRate = form.watch("payRate") || "0";
+  const hours = form.watch("hours") || "0";
+  const earningsName = form.watch("earningsName") || "Earnings";
+  const earningsNote = form.watch("earningsNote") || "";
+  const ytdEarnings = form.watch("ytdEarnings") || "0";
+  const payg = form.watch("payg") || "0";
+  const ytdPayg = form.watch("ytdPayg") || "0";
+  const superAmount = form.watch("superAmount") || "0";
+  const ytdSuper = form.watch("ytdSuper") || "0";
+  const superFund = form.watch("superFund") || "AustralianSuper";
+  const superName = form.watch("superName") || "SG";
+  const superMemberNumber = form.watch("superMemberNumber") || "";
+  const superType = form.watch("superType") || "Super Guarantee";
+  const paymentMethod = form.watch("paymentMethod") || "Manual deposit";
+  const bankAccount = form.watch("bankAccount") || "";
+
+  const gross = parseNum(payRate) * parseNum(hours);
+  const netPayment = Math.max(0, gross - parseNum(payg));
+
   const onSubmit = (data: PayslipFormValues) => {
     const taxRate = data.includeTax
       ? Math.max(0, parseNum(data.taxPercentage))
@@ -208,20 +265,75 @@ export default function PayslipForm() {
       subtotal,
       gstAmount: taxAmount,
       totalAmount,
-      grossSalary: subtotal,
-      netSalary: totalAmount,
+      // payroll-aware fields
+      grossSalary: gross || subtotal,
+      netSalary: netPayment || totalAmount,
+      payRate: data.payRate || "0",
+      hours: data.hours || "0",
+      earningsName: data.earningsName || (data.items[0]?.description || "Earnings"),
+      earningsNote: data.earningsNote || "",
+      ytdEarnings: data.ytdEarnings || String(gross || subtotal),
+      payg: data.payg || "0",
+      ytdPayg: data.ytdPayg || "0",
+      superFund: data.superFund || "AustralianSuper",
+      superName: data.superName || "SG",
+      superMemberNumber: data.superMemberNumber || "",
+      superAmount: data.superAmount || "0",
+      ytdSuper: data.ytdSuper || "0",
+      superType: data.superType || "Super Guarantee",
+      paymentMethod: data.paymentMethod || "Manual deposit",
+      bankAccount: data.bankAccount || "",
       items,
     };
     createPayslip.mutate(
       { data: payload as any },
       {
-        onSuccess: (newPayslip) => {
-          queryClient.invalidateQueries({
-            queryKey: getListPayslipsQueryKey(),
-          });
-          toast({ title: "Invoice created successfully" });
-          setLocation(`/payslips/${newPayslip.id}`);
-        },
+          onSuccess: async (newPayslip) => {
+            queryClient.invalidateQueries({
+              queryKey: getListPayslipsQueryKey(),
+            });
+            toast({ title: "Invoice created successfully" });
+            // also create employee pay slip record for QR history
+            try {
+              const company = companies?.find((c) => c.id === parseInt(data.companyId, 10));
+              const emp = employees?.find((e) => e.id === parseInt(data.employeeId, 10));
+              const periodStart = new Date(parseInt(data.year, 10), parseInt(data.month, 10) - 1, 1).toISOString().split("T")[0];
+              const periodEnd = new Date(parseInt(data.year, 10), parseInt(data.month, 10), 0).toISOString().split("T")[0];
+              const empSlip = {
+                companyId: data.companyId,
+                employeeId: data.employeeId,
+                companyName: company?.name || "",
+                companyAbn: (company as any)?.taxNumber || "",
+                employeeName: emp ? `${emp.firstName} ${emp.lastName}` : "",
+                employeeNumber: (emp as any)?.employeeNumber || "",
+                employeeAddress: (emp as any)?.address || "",
+                periodStart,
+                periodEnd,
+                datePaid: data.issueDate || new Date().toISOString().split("T")[0],
+                payRate: data.payRate || "0",
+                hours: data.hours || String(watchedItems.reduce((s, it) => s + parseNum(it.quantity), 0)),
+                earningsName: data.earningsName || (data.items[0]?.description || "Earnings"),
+                earningsNote: data.earningsNote || "",
+                ytdEarnings: data.ytdEarnings || String(gross || subtotal),
+                taxName: data.taxName || "PAYG",
+                payg: data.payg || "0",
+                ytdPayg: data.ytdPayg || "0",
+                superFund: data.superFund || "AustralianSuper",
+                superName: data.superName || "SG",
+                superType: data.superType || "Super Guarantee",
+                superMemberNumber: data.superMemberNumber || "",
+                superAmount: data.superAmount || "0",
+                ytdSuper: data.ytdSuper || "0",
+                paymentMethod: data.paymentMethod || "Manual deposit",
+                bankAccount: data.bankAccount || (emp as any)?.bankAccount || "",
+              };
+              await payrollSlipFetch("/employee-pay-slips", { method: "POST", body: JSON.stringify(empSlip) });
+            } catch (err) {
+              console.error(err);
+              toast({ variant: "destructive", title: "Failed to create employee payslip record" });
+            }
+            setLocation(`/payslips/${newPayslip.id}`);
+          },
         onError: (err) =>
           toast({
             variant: "destructive",
@@ -259,8 +371,106 @@ export default function PayslipForm() {
         <div className="lg:col-span-2 space-y-6">
           {/* Invoice Details */}
           <Card>
+
+          {/* Earnings (payroll-style) */}
+          <Card>
             <CardHeader>
-              <CardTitle>Invoice Details</CardTitle>
+              <CardTitle>Earnings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Hourly rate</Label>
+                  <Input type="number" {...form.register("payRate")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hours paid</Label>
+                  <Input type="number" {...form.register("hours")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Earnings label</Label>
+                  <Input {...form.register("earningsName")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>YTD earnings</Label>
+                  <Input type="number" {...form.register("ytdEarnings")} />
+                </div>
+              </div>
+              <p className="text-sm font-medium pt-2">This pay: {money(gross)}</p>
+              <div className="space-y-2">
+                <Label>Notes</Label>
+                <Input {...form.register("earningsNote")} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tax & super */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Tax &amp; super</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Tax label</Label>
+                  <Input {...form.register("taxName")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tax this pay</Label>
+                  <Input type="number" {...form.register("payg")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>YTD tax</Label>
+                  <Input type="number" {...form.register("ytdPayg")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Super fund</Label>
+                  <Input {...form.register("superFund")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Super label</Label>
+                  <Input {...form.register("superName")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Member number</Label>
+                  <Input {...form.register("superMemberNumber")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Super this pay</Label>
+                  <Input type="number" {...form.register("superAmount")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>YTD super</Label>
+                  <Input type="number" {...form.register("ytdSuper")} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Contribution type</Label>
+                <Input {...form.register("superType")} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Bank payment */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Bank payment</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Payment method</Label>
+                  <Input {...form.register("paymentMethod")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account number</Label>
+                  <Input {...form.register("bankAccount")} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+        </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
