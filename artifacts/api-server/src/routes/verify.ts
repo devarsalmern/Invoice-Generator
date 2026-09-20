@@ -7,7 +7,7 @@ import {
   companiesTable,
   employeesTable,
 } from "@workspace/db";
-import { eq, desc, ne } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
 const router = Router();
@@ -36,11 +36,21 @@ router.get("/:token", async (req: Request, res: Response) => {
         .from(payslipItemsTable)
         .where(eq(payslipItemsTable.payslipId, payslip.id));
 
-      // Past payslips for this employee (all except the current one)
+      // An employee has a distinct database ID for each company. Use their
+      // email address to find every profile for the same person, so scanning
+      // any payslip QR code shows their history across all companies.
+      const matchingEmployees = employee?.email
+        ? await db
+            .select({ id: employeesTable.id })
+            .from(employeesTable)
+            .where(eq(employeesTable.email, employee.email))
+        : [{ id: payslip.employeeId }];
+      const matchingEmployeeIds = matchingEmployees.map(({ id }) => id);
+
       const pastPayslips = await db
         .select()
         .from(payslipsTable)
-        .where(eq(payslipsTable.employeeId, payslip.employeeId))
+        .where(inArray(payslipsTable.employeeId, matchingEmployeeIds))
         .orderBy(desc(payslipsTable.issueDate), desc(payslipsTable.id));
 
       const parseNum = (v: any) =>

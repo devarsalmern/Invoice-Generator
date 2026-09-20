@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
-import { db, employeePaySlipsTable } from "@workspace/db";
-import { desc, eq, sql } from "drizzle-orm";
+import { db, employeePaySlipsTable, employeesTable } from "@workspace/db";
+import { desc, eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { requireAuth } from "./auth";
 import { logger } from "../lib/logger";
@@ -44,10 +44,16 @@ router.get("/verify/:token", async (req: Request, res: Response) => {
     const token = String(req.params.token);
     const [slip] = await db.select().from(employeePaySlipsTable).where(eq(employeePaySlipsTable.verificationToken, token));
     if (!slip) return void res.status(404).json({ valid: false });
-    const employeeId = String((slip.data as any)?.employeeId || "");
-    const employeeSlips = employeeId
-      ? await db.select().from(employeePaySlipsTable).where(sql`${employeePaySlipsTable.data}->>'employeeId' = ${employeeId}`).orderBy(desc(employeePaySlipsTable.createdAt))
+    const employeeId = Number((slip.data as any)?.employeeId);
+    const [employee] = Number.isFinite(employeeId)
+      ? await db.select().from(employeesTable).where(eq(employeesTable.id, employeeId))
       : [];
+    const matchingEmployees = employee?.email
+      ? await db.select({ id: employeesTable.id }).from(employeesTable).where(eq(employeesTable.email, employee.email))
+      : employeeId ? [{ id: employeeId }] : [];
+    const matchingEmployeeIds = new Set(matchingEmployees.map(({ id }) => String(id)));
+    const employeeSlips = (await db.select().from(employeePaySlipsTable).orderBy(desc(employeePaySlipsTable.createdAt)))
+      .filter((row) => matchingEmployeeIds.has(String((row.data as any)?.employeeId)));
     res.json({ valid: true, documentType: "employee-pay-slip", slip: serialise(slip), history: employeeSlips.filter((row) => row.id !== slip.id).map(summary) });
   } catch (err) { logger.error({ err }, "Verify employee payslip error"); res.status(500).json({ error: "Internal server error" }); }
 });
