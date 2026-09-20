@@ -152,8 +152,20 @@ export default function PayslipForm() {
       showTfn: false,
       taxName: "Super Tax",
       taxPercentage: "10",
-      periodStart: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split("T")[0],
-      periodEnd: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split("T")[0],
+      periodStart: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1,
+      )
+        .toISOString()
+        .split("T")[0],
+      periodEnd: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0,
+      )
+        .toISOString()
+        .split("T")[0],
       datePaid: today,
       items: [
         {
@@ -273,20 +285,42 @@ export default function PayslipForm() {
       subtotal,
       gstAmount: taxAmount,
       totalAmount,
-      companyName: companies?.find((c) => c.id === parseInt(data.companyId, 10))?.name || "",
-      companyAbn: (companies?.find((c) => c.id === parseInt(data.companyId, 10)) as any)?.taxNumber || "",
-      employeeName: (() => { const employee = employees?.find((e) => e.id === parseInt(data.employeeId, 10)); return employee ? `${employee.firstName} ${employee.lastName}` : ""; })(),
-      employeeNumber: (employees?.find((e) => e.id === parseInt(data.employeeId, 10)) as any)?.employeeNumber || "",
-      employeeAddress: (employees?.find((e) => e.id === parseInt(data.employeeId, 10)) as any)?.address || "",
-      periodStart: data.periodStart || new Date(parseInt(data.year, 10), parseInt(data.month, 10) - 1, 1).toISOString().split("T")[0],
-      periodEnd: data.periodEnd || new Date(parseInt(data.year, 10), parseInt(data.month, 10), 0).toISOString().split("T")[0],
+      companyName:
+        companies?.find((c) => c.id === parseInt(data.companyId, 10))?.name ||
+        "",
+      companyAbn:
+        (companies?.find((c) => c.id === parseInt(data.companyId, 10)) as any)
+          ?.taxNumber || "",
+      employeeName: (() => {
+        const employee = employees?.find(
+          (e) => e.id === parseInt(data.employeeId, 10),
+        );
+        return employee ? `${employee.firstName} ${employee.lastName}` : "";
+      })(),
+      employeeNumber:
+        (employees?.find((e) => e.id === parseInt(data.employeeId, 10)) as any)
+          ?.employeeNumber || "",
+      employeeAddress:
+        (employees?.find((e) => e.id === parseInt(data.employeeId, 10)) as any)
+          ?.address || "",
+      periodStart:
+        data.periodStart ||
+        new Date(parseInt(data.year, 10), parseInt(data.month, 10) - 1, 1)
+          .toISOString()
+          .split("T")[0],
+      periodEnd:
+        data.periodEnd ||
+        new Date(parseInt(data.year, 10), parseInt(data.month, 10), 0)
+          .toISOString()
+          .split("T")[0],
       datePaid: data.datePaid || today,
       // payroll-aware fields
       grossSalary: gross || subtotal,
       netSalary: netPayment || totalAmount,
       payRate: data.payRate || "0",
       hours: data.hours || "0",
-      earningsName: data.earningsName || (data.items[0]?.description || "Earnings"),
+      earningsName:
+        data.earningsName || data.items[0]?.description || "Earnings",
       earningsNote: data.earningsNote || "",
       ytdEarnings: data.ytdEarnings || String(gross || subtotal),
       payg: data.payg || "0",
@@ -304,52 +338,75 @@ export default function PayslipForm() {
     createPayslip.mutate(
       { data: payload as any },
       {
-          onSuccess: async (newPayslip) => {
-            queryClient.invalidateQueries({
-              queryKey: getListPayslipsQueryKey(),
+        onSuccess: async (newPayslip) => {
+          queryClient.invalidateQueries({
+            queryKey: getListPayslipsQueryKey(),
+          });
+          toast({ title: "Payslip created successfully" });
+          // also create employee pay slip record for QR history
+          try {
+            const company = companies?.find(
+              (c) => c.id === parseInt(data.companyId, 10),
+            );
+            const emp = employees?.find(
+              (e) => e.id === parseInt(data.employeeId, 10),
+            );
+            const periodStart =
+              data.periodStart ||
+              new Date(parseInt(data.year, 10), parseInt(data.month, 10) - 1, 1)
+                .toISOString()
+                .split("T")[0];
+            const periodEnd =
+              data.periodEnd ||
+              new Date(parseInt(data.year, 10), parseInt(data.month, 10), 0)
+                .toISOString()
+                .split("T")[0];
+            const empSlip = {
+              companyId: data.companyId,
+              employeeId: data.employeeId,
+              companyName: company?.name || "",
+              companyAbn: (company as any)?.taxNumber || "",
+              employeeName: emp ? `${emp.firstName} ${emp.lastName}` : "",
+              employeeNumber: (emp as any)?.employeeNumber || "",
+              employeeAddress: (emp as any)?.address || "",
+              periodStart,
+              periodEnd,
+              datePaid: data.datePaid || new Date().toISOString().split("T")[0],
+              payRate: data.payRate || "0",
+              hours:
+                data.hours ||
+                String(
+                  watchedItems.reduce((s, it) => s + parseNum(it.quantity), 0),
+                ),
+              earningsName:
+                data.earningsName || data.items[0]?.description || "Earnings",
+              earningsNote: data.earningsNote || "",
+              ytdEarnings: data.ytdEarnings || String(gross || subtotal),
+              taxName: data.taxName || "PAYG",
+              payg: data.payg || "0",
+              ytdPayg: data.ytdPayg || "0",
+              superFund: data.superFund || "AustralianSuper",
+              superName: data.superName || "Superannuation Breakdown",
+              superType: data.superType || "Super Guarantee",
+              superMemberNumber: data.superMemberNumber || "",
+              superAmount: data.superAmount || "0",
+              ytdSuper: data.ytdSuper || "0",
+              paymentMethod: data.paymentMethod || "Manual deposit",
+              bankAccount: data.bankAccount || (emp as any)?.bankAccount || "",
+            };
+            await payrollSlipFetch("/employee-pay-slips", {
+              method: "POST",
+              body: JSON.stringify(empSlip),
             });
-            toast({ title: "Payslip created successfully" });
-            // also create employee pay slip record for QR history
-            try {
-              const company = companies?.find((c) => c.id === parseInt(data.companyId, 10));
-              const emp = employees?.find((e) => e.id === parseInt(data.employeeId, 10));
-              const periodStart = data.periodStart || new Date(parseInt(data.year, 10), parseInt(data.month, 10) - 1, 1).toISOString().split("T")[0];
-              const periodEnd = data.periodEnd || new Date(parseInt(data.year, 10), parseInt(data.month, 10), 0).toISOString().split("T")[0];
-              const empSlip = {
-                companyId: data.companyId,
-                employeeId: data.employeeId,
-                companyName: company?.name || "",
-                companyAbn: (company as any)?.taxNumber || "",
-                employeeName: emp ? `${emp.firstName} ${emp.lastName}` : "",
-                employeeNumber: (emp as any)?.employeeNumber || "",
-                employeeAddress: (emp as any)?.address || "",
-                periodStart,
-                periodEnd,
-                datePaid: data.datePaid || new Date().toISOString().split("T")[0],
-                payRate: data.payRate || "0",
-                hours: data.hours || String(watchedItems.reduce((s, it) => s + parseNum(it.quantity), 0)),
-                earningsName: data.earningsName || (data.items[0]?.description || "Earnings"),
-                earningsNote: data.earningsNote || "",
-                ytdEarnings: data.ytdEarnings || String(gross || subtotal),
-                taxName: data.taxName || "PAYG",
-                payg: data.payg || "0",
-                ytdPayg: data.ytdPayg || "0",
-                superFund: data.superFund || "AustralianSuper",
-                superName: data.superName || "Superannuation Breakdown",
-                superType: data.superType || "Super Guarantee",
-                superMemberNumber: data.superMemberNumber || "",
-                superAmount: data.superAmount || "0",
-                ytdSuper: data.ytdSuper || "0",
-                paymentMethod: data.paymentMethod || "Manual deposit",
-                bankAccount: data.bankAccount || (emp as any)?.bankAccount || "",
-              };
-              await payrollSlipFetch("/employee-pay-slips", { method: "POST", body: JSON.stringify(empSlip) });
-            } catch (err) {
-              console.error(err);
-              toast({ variant: "destructive", title: "Failed to create employee payslip record" });
-            }
-            setLocation(`/payslips/${newPayslip.id}`);
-          },
+          } catch (err) {
+            console.error(err);
+            toast({
+              variant: "destructive",
+              title: "Failed to create employee payslip record",
+            });
+          }
+          setLocation(`/payslips/${newPayslip.id}`);
+        },
         onError: (err) =>
           toast({
             variant: "destructive",
@@ -394,11 +451,11 @@ export default function PayslipForm() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Hourly rate</Label>
-                  <Input type="number" {...form.register("payRate")} />
+                  <Input type="string" {...form.register("payRate")} />
                 </div>
                 <div className="space-y-2">
                   <Label>Hours paid</Label>
-                  <Input type="number" {...form.register("hours")} />
+                  <Input type="string" {...form.register("hours")} />
                 </div>
                 <div className="space-y-2">
                   <Label>Earnings label</Label>
@@ -406,10 +463,12 @@ export default function PayslipForm() {
                 </div>
                 <div className="space-y-2">
                   <Label>YTD earnings</Label>
-                  <Input type="number" {...form.register("ytdEarnings")} />
+                  <Input type="string" {...form.register("ytdEarnings")} />
                 </div>
               </div>
-              <p className="text-sm font-medium pt-2">This pay: {money(gross)}</p>
+              <p className="text-sm font-medium pt-2">
+                This pay: {money(gross)}
+              </p>
               <div className="space-y-2">
                 <Label>Notes</Label>
                 <Input {...form.register("earningsNote")} />
@@ -430,11 +489,11 @@ export default function PayslipForm() {
                 </div>
                 <div className="space-y-2">
                   <Label>Tax this pay</Label>
-                  <Input type="number" {...form.register("payg")} />
+                  <Input type="string" {...form.register("payg")} />
                 </div>
                 <div className="space-y-2">
                   <Label>YTD tax</Label>
-                  <Input type="number" {...form.register("ytdPayg")} />
+                  <Input type="string" {...form.register("ytdPayg")} />
                 </div>
                 <div className="space-y-2">
                   <Label>Super fund</Label>
@@ -450,11 +509,11 @@ export default function PayslipForm() {
                 </div>
                 <div className="space-y-2">
                   <Label>Super this pay</Label>
-                  <Input type="number" step="0.01" {...form.register("superAmount")} />
+                  <Input type="string" {...form.register("superAmount")} />
                 </div>
                 <div className="space-y-2">
                   <Label>YTD super</Label>
-                  <Input type="number" {...form.register("ytdSuper")} />
+                  <Input type="string" {...form.register("ytdSuper")} />
                 </div>
               </div>
               <div className="space-y-2">
