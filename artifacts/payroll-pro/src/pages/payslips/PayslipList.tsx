@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   useListPayslips,
+  useDeletePayslip,
   getListPayslipsQueryKey,
   useListCompanies,
   getListCompaniesQueryKey,
 } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,14 +26,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, Search, Building2, User } from "lucide-react";
+import { FileText, Plus, Building2, User, Pencil, Trash2, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 export default function PayslipList() {
   const [companyId, setCompanyId] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: companies } = useListCompanies({
     query: { queryKey: getListCompaniesQueryKey() },
@@ -45,6 +61,7 @@ export default function PayslipList() {
   const { data: payslips, isLoading, isError, error } = useListPayslips(queryParams, {
     query: { queryKey: getListPayslipsQueryKey(queryParams) },
   });
+  const deletePayslip = useDeletePayslip();
 
   const formatCurrency = (value: number | string | null | undefined) => {
     const amount = typeof value === "number" ? value : parseFloat(value || "0");
@@ -78,6 +95,24 @@ export default function PayslipList() {
     (a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
+
+  const handleDelete = (id: number) => {
+    deletePayslip.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListPayslipsQueryKey() });
+          toast({ title: "Payslip deleted" });
+        },
+        onError: (err) =>
+          toast({
+            variant: "destructive",
+            title: "Could not delete payslip",
+            description: err.message,
+          }),
+      },
+    );
+  };
 
   const getStatusBadge = (statusStr: string) => {
     switch (statusStr) {
@@ -183,6 +218,7 @@ export default function PayslipList() {
                   <TableHead className="text-right">Super Tax</TableHead>
                   <TableHead className="text-right">Net</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -210,11 +246,14 @@ export default function PayslipList() {
                       <TableCell>
                         <Skeleton className="h-6 w-16" />
                       </TableCell>
+                      <TableCell className="text-right">
+                        <Skeleton className="h-8 w-20 ml-auto" />
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : isError ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center">
+                    <TableCell colSpan={8} className="h-32 text-center">
                       <div className="flex flex-col items-center justify-center text-destructive">
                         <FileText className="h-8 w-8 mb-2 opacity-50" />
                         <p className="font-medium">Could not load payslips</p>
@@ -228,7 +267,7 @@ export default function PayslipList() {
                   </TableRow>
                 ) : payslips?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center">
+                    <TableCell colSpan={8} className="h-32 text-center">
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
                         <FileText className="h-8 w-8 mb-2 opacity-20" />
                         <p>No payslips found</p>
@@ -285,6 +324,57 @@ export default function PayslipList() {
                           {formatCurrency(payslip.netSalary)}
                         </TableCell>
                         <TableCell>{getStatusBadge(payslip.status)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              aria-label="Edit payslip"
+                              title="Edit payslip"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setLocation(`/payslips/${payslip.id}/edit`);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="destructive"
+                                  size="icon"
+                                  aria-label="Delete payslip"
+                                  title="Delete payslip"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete payslip?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to permanently delete PAY-
+                                    {String(payslip.id).padStart(4, "0")}? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(payslip.id)}
+                                    disabled={deletePayslip.isPending}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    {deletePayslip.isPending && (
+                                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    )}
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     );
                   })
