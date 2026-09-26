@@ -135,7 +135,7 @@ export default function PayslipList() {
                   <TableHead>Employee</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead className="text-right">Gross</TableHead>
-                  <TableHead className="text-right">Tax</TableHead>
+                  <TableHead className="text-right">Super Tax</TableHead>
                   <TableHead className="text-right">Net</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -199,15 +199,11 @@ export default function PayslipList() {
                       new Date(payslip.year, payslip.month - 1, 1),
                       "MMM yyyy",
                     );
-                    const payg = (
+                    const superTax = (
                       payslip as unknown as {
-                        payg?: number | string | null;
+                        superAmount?: number | string | null;
                       }
-                    ).payg;
-                    const tax = payg ?? Math.max(
-                      0,
-                      Number(payslip.grossSalary) - Number(payslip.netSalary),
-                    );
+                    ).superAmount ?? 0;
 
                     return (
                       <TableRow
@@ -238,7 +234,7 @@ export default function PayslipList() {
                           {formatCurrency(payslip.grossSalary)}
                         </TableCell>
                         <TableCell className="text-right text-muted-foreground">
-                          {formatCurrency(tax)}
+                          {formatCurrency(superTax)}
                         </TableCell>
                         <TableCell className="text-right font-medium">
                           {formatCurrency(payslip.netSalary)}
