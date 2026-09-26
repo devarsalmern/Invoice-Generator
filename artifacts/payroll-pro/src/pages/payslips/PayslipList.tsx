@@ -74,6 +74,11 @@ export default function PayslipList() {
     { gross: 0, superTax: 0, net: 0 },
   );
 
+  const sortedPayslips = [...(payslips ?? [])].sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
   const getStatusBadge = (statusStr: string) => {
     switch (statusStr) {
       case "draft":
@@ -231,7 +236,7 @@ export default function PayslipList() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  payslips?.map((payslip) => {
+                  sortedPayslips.map((payslip) => {
                     const company = companies?.find(
                       (c) => c.id === payslip.companyId,
                     );
