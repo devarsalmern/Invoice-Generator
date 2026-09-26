@@ -45,6 +45,7 @@ import { format } from "date-fns";
 export default function PayslipList() {
   const [companyId, setCompanyId] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
+  const [isDetailedView, setIsDetailedView] = useState(false);
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -207,17 +208,32 @@ export default function PayslipList() {
               </p>
             </div>
           </div>
+          <div className="flex justify-end mb-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsDetailedView((current) => !current)}
+            >
+              {isDetailedView ? "Compact columns" : "Expand columns"}
+            </Button>
+          </div>
           <div className="rounded-md border">
-            <Table>
+            <Table
+              className={`table-fixed whitespace-nowrap ${
+                isDetailedView ? "min-w-[1600px]" : "min-w-[1280px]"
+              }`}
+            >
               <TableHeader>
                 <TableRow>
-                  <TableHead>Period</TableHead>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead className="text-right">Gross</TableHead>
-                  <TableHead className="text-right">Super Tax</TableHead>
-                  <TableHead className="text-right">Net</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[130px]">Period</TableHead>
+                  <TableHead className="w-[220px]">Employee</TableHead>
+                  <TableHead className={isDetailedView ? "w-[480px]" : "w-[260px]"}>
+                    Company
+                  </TableHead>
+                  <TableHead className="w-[140px] text-right">Gross</TableHead>
+                  <TableHead className="w-[160px] text-right">Super Tax</TableHead>
+                  <TableHead className="w-[140px] text-right">Net</TableHead>
+                  <TableHead className="w-[250px]">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -305,7 +321,12 @@ export default function PayslipList() {
                         <TableCell>
                           <div className="flex items-center gap-2 text-muted-foreground text-sm">
                             <Building2 className="h-4 w-4" />
-                            <span className="truncate max-w-[150px]">
+                            <span
+                              className={`truncate ${
+                                isDetailedView ? "max-w-[420px]" : "max-w-[220px]"
+                              }`}
+                              title={company?.name || `Company #${payslip.companyId}`}
+                            >
                               {company?.name || `Company #${payslip.companyId}`}
                             </span>
                           </div>
