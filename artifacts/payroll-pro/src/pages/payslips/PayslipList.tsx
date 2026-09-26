@@ -54,6 +54,26 @@ export default function PayslipList() {
     }).format(Number.isFinite(amount) ? amount : 0);
   };
 
+  const toAmount = (value: number | string | null | undefined) => {
+    const amount = typeof value === "number" ? value : parseFloat(value || "0");
+    return Number.isFinite(amount) ? amount : 0;
+  };
+
+  const totals = (payslips ?? []).reduce(
+    (current, payslip) => {
+      const superTax = (
+        payslip as unknown as { superAmount?: number | string | null }
+      ).superAmount;
+
+      return {
+        gross: current.gross + toAmount(payslip.grossSalary),
+        superTax: current.superTax + toAmount(superTax),
+        net: current.net + toAmount(payslip.netSalary),
+      };
+    },
+    { gross: 0, superTax: 0, net: 0 },
+  );
+
   const getStatusBadge = (statusStr: string) => {
     switch (statusStr) {
       case "draft":
@@ -127,6 +147,26 @@ export default function PayslipList() {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="grid gap-3 sm:grid-cols-3 mb-4">
+            <div className="rounded-md border bg-muted/30 px-4 py-3">
+              <p className="text-sm text-muted-foreground">Total Gross</p>
+              <p className="text-xl font-semibold tabular-nums">
+                {formatCurrency(totals.gross)}
+              </p>
+            </div>
+            <div className="rounded-md border bg-muted/30 px-4 py-3">
+              <p className="text-sm text-muted-foreground">Total Super Tax</p>
+              <p className="text-xl font-semibold tabular-nums">
+                {formatCurrency(totals.superTax)}
+              </p>
+            </div>
+            <div className="rounded-md border bg-muted/30 px-4 py-3">
+              <p className="text-sm text-muted-foreground">Total Net</p>
+              <p className="text-xl font-semibold tabular-nums">
+                {formatCurrency(totals.net)}
+              </p>
+            </div>
+          </div>
           <div className="rounded-md border">
             <Table>
               <TableHeader>
