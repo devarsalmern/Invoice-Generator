@@ -218,7 +218,6 @@ export default function PayslipList() {
                   <TableHead className="text-right">Super Tax</TableHead>
                   <TableHead className="text-right">Net</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -244,16 +243,13 @@ export default function PayslipList() {
                         <Skeleton className="h-5 w-16 ml-auto" />
                       </TableCell>
                       <TableCell>
-                        <Skeleton className="h-6 w-16" />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Skeleton className="h-8 w-20 ml-auto" />
+                        <Skeleton className="h-8 w-36" />
                       </TableCell>
                     </TableRow>
                   ))
                 ) : isError ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-32 text-center">
+                    <TableCell colSpan={7} className="h-32 text-center">
                       <div className="flex flex-col items-center justify-center text-destructive">
                         <FileText className="h-8 w-8 mb-2 opacity-50" />
                         <p className="font-medium">Could not load payslips</p>
@@ -267,7 +263,7 @@ export default function PayslipList() {
                   </TableRow>
                 ) : payslips?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-32 text-center">
+                    <TableCell colSpan={7} className="h-32 text-center">
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
                         <FileText className="h-8 w-8 mb-2 opacity-20" />
                         <p>No payslips found</p>
@@ -323,9 +319,9 @@ export default function PayslipList() {
                         <TableCell className="text-right font-medium">
                           {formatCurrency(payslip.netSalary)}
                         </TableCell>
-                        <TableCell>{getStatusBadge(payslip.status)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getStatusBadge(payslip.status)}
                             <Button
                               variant="outline"
                               size="icon"
