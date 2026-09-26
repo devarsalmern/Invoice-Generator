@@ -135,6 +135,7 @@ export default function PayslipList() {
                   <TableHead>Employee</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead className="text-right">Gross</TableHead>
+                  <TableHead className="text-right">Tax</TableHead>
                   <TableHead className="text-right">Net</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -158,6 +159,9 @@ export default function PayslipList() {
                       <TableCell className="text-right">
                         <Skeleton className="h-5 w-16 ml-auto" />
                       </TableCell>
+                      <TableCell className="text-right">
+                        <Skeleton className="h-5 w-16 ml-auto" />
+                      </TableCell>
                       <TableCell>
                         <Skeleton className="h-6 w-16" />
                       </TableCell>
@@ -165,7 +169,7 @@ export default function PayslipList() {
                   ))
                 ) : isError ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center">
+                    <TableCell colSpan={7} className="h-32 text-center">
                       <div className="flex flex-col items-center justify-center text-destructive">
                         <FileText className="h-8 w-8 mb-2 opacity-50" />
                         <p className="font-medium">Could not load payslips</p>
@@ -179,7 +183,7 @@ export default function PayslipList() {
                   </TableRow>
                 ) : payslips?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center">
+                    <TableCell colSpan={7} className="h-32 text-center">
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
                         <FileText className="h-8 w-8 mb-2 opacity-20" />
                         <p>No payslips found</p>
@@ -194,6 +198,15 @@ export default function PayslipList() {
                     const period = format(
                       new Date(payslip.year, payslip.month - 1, 1),
                       "MMM yyyy",
+                    );
+                    const payg = (
+                      payslip as unknown as {
+                        payg?: number | string | null;
+                      }
+                    ).payg;
+                    const tax = payg ?? Math.max(
+                      0,
+                      Number(payslip.grossSalary) - Number(payslip.netSalary),
                     );
 
                     return (
@@ -223,6 +236,9 @@ export default function PayslipList() {
                         </TableCell>
                         <TableCell className="text-right text-muted-foreground">
                           {formatCurrency(payslip.grossSalary)}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {formatCurrency(tax)}
                         </TableCell>
                         <TableCell className="text-right font-medium">
                           {formatCurrency(payslip.netSalary)}
